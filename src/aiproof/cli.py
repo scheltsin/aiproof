@@ -141,7 +141,11 @@ def cmd_proxy(a: argparse.Namespace) -> int:
 
 
 def cmd_redact(a: argparse.Namespace) -> int:
-    from .redact import redact
+    from .redact import redact, DETECTORS
+    if a.types:
+        for d in DETECTORS:
+            print(f"  {d.name:<16} {'checksum' if d.validator else 'pattern/context'}")
+        return 0
     text = sys.stdin.read() if not a.text else " ".join(a.text)
     out, findings = redact(text)
     sys.stdout.write(out if out.endswith("\n") else out + "\n")
@@ -201,6 +205,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("redact", help="redact PII/secrets from stdin or arguments")
     s.add_argument("text", nargs="*")
+    s.add_argument("--types", action="store_true", help="list detector types")
     s.set_defaults(fn=cmd_redact)
 
     s = sub.add_parser("policy", help="print the effective policy")

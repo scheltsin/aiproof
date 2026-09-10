@@ -123,9 +123,72 @@ def valid_bank_account(value: str) -> bool:
     return len(d) == 20 and d[:2] in {"40", "42", "45", "47", "30", "20"}
 
 
+# ------------------------------------------------------------------ more validators
+
+def valid_okpo(value: str) -> bool:
+    d = _digits(value)
+    if len(d) not in (8, 10) or _trivial(d):
+        return False
+    n = len(d) - 1
+
+    def chk(shift: int) -> int:
+        w = [((i + shift - 1) % 10) + 1 for i in range(1, n + 1)]
+        return sum(int(d[i]) * w[i] for i in range(n)) % 11
+
+    c = chk(0)
+    if c == 10:
+        c = chk(2)
+        if c == 10:
+            c = 0
+    return c == int(d[n])
+
+
+def valid_bik(value: str) -> bool:
+    d = _digits(value)
+    return len(d) == 9 and d[:2] == "04" and not _trivial(d)
+
+
+def valid_iban(value: str) -> bool:
+    v = re.sub(r"\s", "", value).upper()
+    if not 15 <= len(v) <= 34 or not v[:2].isalpha():
+        return False
+    moved = v[4:] + v[:4]
+    num = "".join(str(ord(ch) - 55) if ch.isalpha() else ch for ch in moved)
+    return int(num) % 97 == 1
+
+
+def valid_vin(value: str) -> bool:
+    v = value.upper()
+    return len(v) == 17 and any(c.isdigit() for c in v) and any(c.isalpha() for c in v) and not _trivial(v)
+
+
+def valid_ipv4(value: str) -> bool:
+    parts = value.split(".")
+    return len(parts) == 4 and all(p.isdigit() and 0 <= int(p) <= 255 for p in parts) and value not in ("0.0.0.0", "127.0.0.1")
+
+
+def valid_date(value: str) -> bool:
+    m = re.match(r"(\d{2})[./-](\d{2})[./-](\d{4})", value)
+    if not m:
+        return False
+    dd, mm, yyyy = int(m.group(1)), int(m.group(2)), int(m.group(3))
+    return 1 <= dd <= 31 and 1 <= mm <= 12 and 1900 <= yyyy <= 2100
+
+
 # ------------------------------------------------------------------ detectors
 
 _CTX_PASSPORT = r"(?:паспорт\w*|серия|сер\.|№|номер|passport)[^\d\n]{0,20}"
+_CTX_DL = r"(?:в/у|ву|водительск\w+\s+удостоверени\w+|прав[а-я]*\s+(?:серия|№|номер)|driver'?s?\s+licen[cs]e)[^\d\n]{0,20}"
+_CTX_INTL = r"(?:загранпаспорт\w*|заграничн\w+\s+паспорт\w*|загран)[^\d\n]{0,20}"
+_CTX_OMS = r"(?:полис\w*|омс|oms)[^\d\n]{0,20}"
+_CTX_KPP = r"(?:кпп|kpp)[^\d\n]{0,10}"
+_CTX_OKPO = r"(?:окпо|okpo)[^\d\n]{0,10}"
+_CTX_BIRTH = r"(?:дата\s+рождения|д\.\s?р\.|родил[ас]я|день\s+рождения|date\s+of\s+birth|dob|birthday)[^\d\n]{0,15}"
+_CTX_CVV = r"(?:cvv|cvc|cvv2|cvc2|код\s+безопасности)[^\d\n]{0,6}"
+_CTX_BIRTH_CERT = r"(?:свидетельств\w+\s+о\s+рождении|св-во\s+о\s+рождении)[^\n]{0,20}?"
+
+_CYR_WORD = r"[А-ЯЁ][а-яё]+(?:-[А-ЯЁ][а-яё]+)?"
+_PATRONYMIC = r"[А-ЯЁ][а-яё]+(?:ович|евич|ьич|ична|инична|овна|евна)"
 
 DETECTORS: List[Detector] = [
     Detector("secret", re.compile(
@@ -142,15 +205,47 @@ DETECTORS: List[Detector] = [
         r"|(?i:(?:api[_\-]?key|token|secret|password|пароль)\s*[:=]\s*['\"]?)[A-Za-z0-9_\-\.]{12,}"
         r")"
     )),
+    # people
+    Detector("fio", re.compile(
+        rf"(?<![А-ЯЁа-яё])(?:{_CYR_WORD}[ \t]+{_CYR_WORD}[ \t]+{_PATRONYMIC}"   # Иванов Иван Иванович
+        rf"|{_CYR_WORD}[ \t]+{_PATRONYMIC}[ \t]+{_CYR_WORD}"                    # Иван Иванович Иванов
+        rf"|{_CYR_WORD}[ \t]+[А-ЯЁ]\.[ \t]?[А-ЯЁ]\."                            # Иванов И.И.
+        rf"|[А-ЯЁ]\.[ \t]?[А-ЯЁ]\.[ \t]?{_CYR_WORD})(?![А-ЯЁа-яё])")),          # И.И. Иванов
+    Detector("address", re.compile(
+        r"(?:(?:г\.|город|с\.|село|пос\.|посёлок|поселок|д\.|деревня)\s*[А-ЯЁ][а-яё\-]+(?:\s[А-ЯЁ][а-яё\-]+)?,?\s*)?"
+        r"(?:ул\.|улица|просп\.|пр-т|проспект|пер\.|переулок|ш\.|шоссе|наб\.|набережная|бул\.|бульвар|пл\.|площадь|пр-д|проезд)"
+        r"\s*[А-ЯЁа-яё0-9 .\-]{2,40}?,?\s*(?:д\.|дом)\s*\d+[а-я]?(?:\s*/\s*\d+)?"
+        r"(?:,?\s*(?:к\.|корп\.|корпус|стр\.|строение)\s*\d+[а-я]?)*"
+        r"(?:,?\s*(?:кв\.|квартира|оф\.|офис|пом\.|помещение)\s*\d+[а-я]?)?", re.IGNORECASE)),
+    Detector("birth_date", re.compile(_CTX_BIRTH + r"(\d{2}[./-]\d{2}[./-]\d{4})(?!\d)", re.IGNORECASE), valid_date, 1),
+    # documents (context-anchored)
+    Detector("passport_rf", re.compile(_CTX_PASSPORT + r"(\d{2}\s?\d{2}\s?\d{6})(?!\d)", re.IGNORECASE), None, 1),
+    Detector("intl_passport", re.compile(_CTX_INTL + r"(\d{2}\s?\d{7})(?!\d)", re.IGNORECASE), None, 1),
+    Detector("driver_license", re.compile(_CTX_DL + r"(\d{2}\s?[0-9А-ЯЁ]{2}\s?\d{6})(?![\dА-ЯЁ])", re.IGNORECASE), None, 1),
+    Detector("birth_cert", re.compile(_CTX_BIRTH_CERT + r"([IVX]{1,4}\s?-\s?[А-ЯЁ]{2}\s*№?\s*\d{6})", re.IGNORECASE), None, 1),
+    Detector("oms", re.compile(_CTX_OMS + r"((?:\d[ \-]?){16})(?!\d)", re.IGNORECASE), valid_luhn, 1),
+    Detector("kpp", re.compile(_CTX_KPP + r"(\d{4}[0-9A-Z]{2}\d{3})(?!\d)", re.IGNORECASE), None, 1),
+    Detector("cvv", re.compile(_CTX_CVV + r"(\d{3,4})(?!\d)", re.IGNORECASE), None, 1),
+    # checksum-validated identifiers
     Detector("snils", re.compile(r"(?<!\d)\d{3}[ \-]?\d{3}[ \-]?\d{3}[ \-]?\d{2}(?!\d)"), valid_snils),
     Detector("bank_account", re.compile(r"(?<!\d)\d{20}(?!\d)"), valid_bank_account),
     Detector("ogrn", re.compile(r"(?<!\d)\d{13}(?:\d{2})?(?!\d)"), valid_ogrn),
     Detector("inn", re.compile(r"(?<!\d)\d{10}(?:\d{2})?(?!\d)"), valid_inn),
+    Detector("okpo", re.compile(_CTX_OKPO + r"(\d{8}(?:\d{2})?)(?!\d)", re.IGNORECASE), valid_okpo, 1),
+    Detector("bik", re.compile(r"(?<!\d)04\d{7}(?!\d)"), valid_bik),
     Detector("card", re.compile(r"(?<!\d)(?:\d[ \-]?){13,19}(?!\d)"), valid_luhn),
-    Detector("passport_rf", re.compile(_CTX_PASSPORT + r"(\d{2}\s?\d{2}\s?\d{6})(?!\d)", re.IGNORECASE), None, 1),
+    Detector("iban", re.compile(r"\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{4}){2,7}\s?[A-Z0-9]{1,4}\b"), valid_iban),
+    # property / vehicles
+    Detector("cadastral", re.compile(r"(?<![\d:])\d{2}:\d{2}:\d{6,7}:\d{1,5}(?![\d:])")),
+    Detector("vehicle_plate", re.compile(r"(?<![А-ЯЁA-Z0-9])[АВЕКМНОРСТУХ]\s?\d{3}\s?[АВЕКМНОРСТУХ]{2}\s?\d{2,3}(?![А-ЯЁA-Z0-9])")),
+    Detector("vin", re.compile(r"\b[A-HJ-NPR-Z0-9]{17}\b"), valid_vin),
+    # contacts / network
     Detector("phone_ru", re.compile(r"(?<![\d\w])(?:\+7|8)[ \-]?\(?\d{3}\)?[ \-]?\d{3}[ \-]?\d{2}[ \-]?\d{2}(?!\d)"), valid_phone_ru),
     Detector("email", re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")),
+    Detector("ipv4", re.compile(r"(?<![\d.])(?:\d{1,3}\.){3}\d{1,3}(?![\d.])"), valid_ipv4),
 ]
+
+ALL_TYPES: List[str] = [d.name for d in DETECTORS]
 
 _BY_NAME: Dict[str, Detector] = {d.name: d for d in DETECTORS}
 
@@ -180,6 +275,8 @@ def redact(text: str, types: Optional[List[str]] = None) -> Tuple[str, List[Find
     """Return (redacted_text, findings). ``types`` restricts detector names."""
     if not text or not isinstance(text, str):
         return text, []
+    if types is not None and "*" in types:
+        types = None
     active = [d for d in DETECTORS if types is None or d.name in types]
     spans: List[Tuple[int, int, str, str]] = []  # start, end, kind, token
     taken: List[Tuple[int, int]] = []

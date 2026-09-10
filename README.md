@@ -8,7 +8,7 @@
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-green)](LICENSE)
 [![No dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](pyproject.toml)
 
-`aiproof` is an open-source **AI security and compliance toolkit for LLM applications**: a tamper-evident **audit log for every model call**, **prompt injection detection**, **PII and secret redaction** (with Russian identifiers: ИНН, СНИЛС, паспорт, реквизиты), **usage quotas**, **AI-BOM** (CycloneDX ML-BOM) and a **signed evidence bundle** mapped to **FSTEC order 117 (AI section)**, with cross-references to **ISO/IEC 42001**, **NIST AI RMF**, **EU AI Act** and **OWASP Top 10 for LLM**.
+`aiproof` is an open-source **AI security and compliance toolkit for LLM applications**: a tamper-evident **audit log for every model call**, **prompt injection detection**, **PII and secret redaction** (25 detectors incl. Russian identifiers: ФИО, ИНН, СНИЛС, паспорт, ОМС, адрес, реквизиты), **usage quotas**, **AI-BOM** (CycloneDX ML-BOM) and a **signed evidence bundle** mapped to **FSTEC order 117 (AI section)**, with cross-references to **ISO/IEC 42001**, **NIST AI RMF**, **EU AI Act** and **OWASP Top 10 for LLM**.
 
 Works with **OpenAI**, **Anthropic**, **GigaChat**, **YandexGPT**, **Ollama**, **vLLM**, **DeepSeek**, **OpenRouter** and any OpenAI-compatible API. Python 3.9+, zero dependencies, nothing leaves your machine.
 
@@ -113,7 +113,7 @@ with aiproof.record("rag.answer", model="local-llm", input=question) as r:
 | Area | What you get |
 |---|---|
 | **LLM audit log** | Hash-chained JSONL ledger (`prev` + SHA-256 + optional HMAC). Detects modification, reordering, deletion, chain regeneration without the key, tail truncation (with an external head). |
-| **PII redaction** | ИНН, СНИЛС, ОГРН/ОГРНИП, паспорт РФ, phone RU, bank account, card numbers (Luhn), e-mail, API keys/JWT/private keys. Checksum-validated, stable tokens, custom detectors. |
+| **PII redaction** | 25 detectors: ФИО, адрес, дата рождения, паспорт РФ, загранпаспорт, водительское удостоверение, свидетельство о рождении, полис ОМС, ИНН, КПП, ОГРН/ОГРНИП, ОКПО, БИК, расчётный счёт, карты (Luhn), CVV, IBAN, кадастровый номер, госномер, VIN, телефон, e-mail, IPv4, API keys/JWT/private keys. Checksum-validated where the id has one, context-anchored otherwise, stable tokens, custom detectors. Full list: [docs/pii-detectors.md](docs/pii-detectors.md). |
 | **Prompt injection detection** | RU + EN rules: instruction override, system-prompt extraction, stealth, disabling safety, exfiltration paths, dangerous shell, zero-width/bidi Unicode, HTML comments, fake chat delimiters. |
 | **Output leak detection** | Secrets and PII in model responses; optional blocking. |
 | **Quotas** | Requests per minute, tokens per day, prompt size. |

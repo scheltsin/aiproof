@@ -42,9 +42,8 @@ class Policy:
 
     # redaction (Russian + generic PII / secrets)
     redact: bool = True
-    redact_types: List[str] = field(default_factory=lambda: [
-        "inn", "snils", "ogrn", "passport_rf", "phone_ru", "email", "card", "bank_account", "secret"
-    ])
+    # detector names (see `aiproof redact --types`); ["*"] = all built-in and registered detectors
+    redact_types: List[str] = field(default_factory=lambda: ["*"])
 
     # filters
     filter_input: bool = True
