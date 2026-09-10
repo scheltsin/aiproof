@@ -128,6 +128,7 @@ redacted: fio=1, passport_rf=1, inn=1, card=1, phone_ru=1
 - [Prompt injection and leak filters](#prompt-injection-and-leak-filters)
 - [Attest, check, verify: compliance evidence](#attest-check-verify-compliance-evidence)
 - [CI/CD: GitHub Action, GitLab CI, Claude Code skill](#cicd-github-action-gitlab-ci-claude-code-skill)
+- [Scale and production](#scale-and-production)
 - [Comparison with other tools](#comparison-with-other-tools)
 - [FAQ](#faq)
 - [Limitations](#limitations)
@@ -299,6 +300,20 @@ GitLab (`.gitlab-ci.yml`): see [this repository's pipeline](.gitlab-ci.yml): lin
 
 Claude Code / Codex / Cursor: copy [`skills/aiproof/`](skills/aiproof/SKILL.md) into your skills directory and ask *"check this project for FSTEC 117 AI readiness"*.
 
+## Scale and production
+
+Measured on one CPU core (Python 3.11, 25 PII detectors, all filters on, HMAC): about 0.6 ms per call in `redacted` mode and 0.3 ms in `hash` mode, i.e. 1 700 / 3 400 records per second per process; four worker processes appending to one ledger file reach about 6 500 records per second. An LLM call itself takes 300–5 000 ms, so the overhead is below 0.2%.
+
+Disk: a typical support-bot exchange (system prompt + question + answer, redacted) is about 1.6 KB per record, 750 B in `hash` mode; 1 million calls is about 1.6 GB / 0.75 GB raw, and JSONL compresses about 13x with gzip (1 million calls ≈ 120 MB archived).
+
+What keeps it from filling the disk:
+
+- **Rotation**: the ledger is rotated at `rotate_mb` (default 256 MB) into `ledger-<utc>-<seq>.jsonl`; the chain continues into the new file (its first `prev` is the last hash of the previous one), so `aiproof verify .aiproof/` verifies the whole directory as one chain and a missing middle segment is detected.
+- **Shipping**: rotated segments are plain files for your log shipper (Vector, Filebeat, rsyslog) to compress and move to a SIEM or object storage the application cannot write to; keep the head hash there too.
+- **Storage modes**: `hash` stores only digests (2x smaller, still proves what was sent); `max_content_chars` truncates giant prompts (the hash always covers the full content).
+- **Multi-process**: appends are serialised with an advisory file lock and the chain re-syncs from the file tail, so gunicorn/uvicorn workers can share one ledger; or give each worker its own file with `AIPROOF_LEDGER_PATH`.
+- **Quotas**: the `ru-fstek-117` preset caps at 3 000 requests per minute per process; set your own numbers.
+
 ## Comparison with other tools
 
 | | aiproof | LLM observability (Langfuse, Arize, OpenLLMetry) | AI firewalls / gateways | Agent skill scanners (Snyk agent-scan, SkillSpector) |
@@ -334,7 +349,7 @@ Use them together: a gateway filters, an observability tool debugs, `aiproof` pr
 - Filters are heuristics; chain a real classifier or gateway in `add_input_filter`.
 - Quotas are per process; cluster-wide limits belong in your gateway.
 - The FSTEC 117 control map follows the official methodology (12.04.2026, p. 3.18) verbatim; it is technical evidence, not legal advice, and the manual controls still need your documents.
-- Ledger files grow; rotate with your log shipper and anchor heads externally.
+- Ledger segments must be shipped and anchored externally; the library rotates but does not delete.
 - The proxy is stdlib and single-host: fine for dev, CI and small services.
 
 ## Roadmap

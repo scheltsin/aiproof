@@ -1,4 +1,5 @@
 import json
+import os
 
 from aiproof.ledger import Ledger, verify_file, GENESIS
 
@@ -69,3 +70,44 @@ def test_forged_chain_without_key_fails_mac(tmp_path):
     assert not res.ok and any("mac" in e for e in res.errors)
     rec = json.loads(p.read_text().splitlines()[0])
     assert rec["i"] == 999
+
+
+def test_rotation_keeps_chain(tmp_path):
+    from aiproof.ledger import verify_chain, ledger_files
+    p = tmp_path / "ledger.jsonl"
+    led = Ledger(str(p), app="t", rotate_mb=0)
+    led.rotate_bytes = 600  # tiny segments for the test
+    for i in range(20):
+        led.append("e", {"i": i, "pad": "x" * 100})
+    files = ledger_files(str(tmp_path))
+    assert len(files) > 2
+    # each segment verifies on its own (mid-chain start accepted)...
+    for f in files[1:]:
+        r = verify_file(f)
+        assert r.ok and r.chained_from
+    # ...and the whole directory verifies as one chain
+    res = verify_chain(str(tmp_path))
+    assert res.ok and res.records == 20
+    # a segment removed from the middle breaks the chain
+    os.remove(files[1])
+    assert not verify_chain(str(tmp_path)).ok
+
+
+def test_multiprocess_writers_share_one_chain(tmp_path):
+    import multiprocessing as mp
+    p = tmp_path / "ledger.jsonl"
+
+    def worker(n):
+        led = Ledger(str(p), app="t")
+        for i in range(n):
+            led.append("e", {"w": os.getpid(), "i": i})
+
+    procs = [mp.Process(target=worker, args=(50,)) for _ in range(4)]
+    for pr in procs:
+        pr.start()
+    for pr in procs:
+        pr.join()
+    r = verify_file(str(p))
+    assert r.ok and r.records == 200
+
+

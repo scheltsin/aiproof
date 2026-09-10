@@ -160,7 +160,8 @@ def extract_usage(response: Any) -> Dict[str, int]:
 class Guard:
     def __init__(self, policy: Any = None):
         self.policy: Policy = load_policy(policy)
-        self.ledger = Ledger(self.policy.ledger_path, key=self.policy.hmac_key(), app=self.policy.app)
+        self.ledger = Ledger(self.policy.ledger_path, key=self.policy.hmac_key(), app=self.policy.app,
+                             rotate_mb=self.policy.rotate_mb)
         self._quota = tracker()
 
     # ------------------------------------------------------------------ util

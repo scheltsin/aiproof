@@ -41,12 +41,20 @@ def cmd_init(a: argparse.Namespace) -> int:
 
 
 def cmd_verify(a: argparse.Namespace) -> int:
-    from .ledger import verify_file
+    from .ledger import verify_file, verify_chain
     from .attest import verify_bundle
     key = _key()
     rc = 0
     paths: List[str] = a.paths or [os.path.join(DEFAULT_DIR, "ledger.jsonl")]
     for p in paths:
+        if os.path.isdir(p):
+            r = verify_chain(p, key)
+            status = _c("OK ", "g") if r.ok else _c("FAIL", "r")
+            print(f"{status} chain {p}: {r.records} records across segments, head {r.last_hash[:16]}…")
+            for e in r.errors:
+                print("   " + _c(e, "r"))
+            rc |= 0 if r.ok else 1
+            continue
         if p.endswith(".zip"):
             res = verify_bundle(p, key)
             s = res.get("manifest", {}).get("summary")
@@ -58,7 +66,8 @@ def cmd_verify(a: argparse.Namespace) -> int:
         r = verify_file(p, key, expected_head=a.head)
         status = _c("OK ", "g") if r.ok else _c("FAIL", "r")
         mac = "mac verified" if r.mac_checked else f"mac not checked (set {ENV_PREFIX}_KEY)"
-        print(f"{status} {p}: {r.records} records, head {r.last_hash[:16]}…, {mac}")
+        seg = f", continues chain from {r.chained_from[:16]}…" if r.chained_from else ""
+        print(f"{status} {p}: {r.records} records, head {r.last_hash[:16]}…, {mac}{seg}")
         for e in r.errors:
             print("   " + _c(e, "r"))
         rc |= 0 if r.ok else 1
@@ -175,7 +184,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--force", action="store_true")
     s.set_defaults(fn=cmd_init)
 
-    s = sub.add_parser("verify", help="verify ledger files or evidence bundles (.zip)")
+    s = sub.add_parser("verify", help="verify ledger files, a ledger directory (all rotated segments) or evidence bundles (.zip)")
     s.add_argument("paths", nargs="*")
     s.add_argument("--head", default=None, help="expected last hash (detect truncation)")
     s.add_argument("--json", action="store_true")

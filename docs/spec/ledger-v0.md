@@ -4,7 +4,7 @@ Status: draft. Any implementation (any language) that follows this document prod
 
 ## File
 
-UTF-8 JSON Lines. One JSON object per line, append-only. A file is one chain; rotation starts a new file whose first record still carries `prev` = last hash of the previous file (so files can be linked), or `prev` = 64 zeros for a fresh chain.
+UTF-8 JSON Lines. One JSON object per line, append-only. Rotation (default at 256 MB) renames the full file to `<stem>-<utc>-<seq>.jsonl` and continues in a fresh file whose first record carries `prev` = last hash of the previous file and the next `seq`; `prev` = 64 zeros marks the start of a chain. Several processes may append to one file: writers take an advisory lock and re-read the tail before appending.
 
 ## Record
 

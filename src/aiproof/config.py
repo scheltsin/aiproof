@@ -35,6 +35,7 @@ class Policy:
     # what to store about prompts/responses: "redacted" | "hash" | "none"
     store_content: str = "redacted"
     max_content_chars: int = 20000  # truncate very long content (hash is always full)
+    rotate_mb: int = 256  # rotate the ledger file at this size; the chain continues in the next file (0 = never)
     # HMAC key (hex/utf-8) for authenticating the chain. Read from env <NAME>_KEY if empty.
     key: Optional[str] = None
     # extra metadata copied into every record (e.g. {"env": "prod", "owner": "team-x"})
@@ -86,7 +87,7 @@ PRESETS: Dict[str, Dict[str, Any]] = {
         "filter_output": True,
         "on_injection": "log",
         "on_secret_leak": "block",
-        "max_requests_per_minute": 600,
+        "max_requests_per_minute": 3000,
         "max_tokens_per_day": 0,
     },
     # Same as ru-fstek-117 but blocks on injection and stores hashes only.
@@ -101,7 +102,7 @@ PRESETS: Dict[str, Dict[str, Any]] = {
 }
 
 _BOOL_KEYS = {"redact", "filter_input", "filter_output", "fail_closed", "enabled"}
-_INT_KEYS = {"max_requests_per_minute", "max_tokens_per_day", "max_prompt_chars", "max_content_chars"}
+_INT_KEYS = {"max_requests_per_minute", "max_tokens_per_day", "max_prompt_chars", "max_content_chars", "rotate_mb"}
 
 
 def _coerce(key: str, value: str) -> Any:

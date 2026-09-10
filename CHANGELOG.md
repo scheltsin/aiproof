@@ -2,7 +2,8 @@
 
 ## 0.1.0 (unreleased)
 
-- Hash-chained JSONL ledger with optional HMAC; `aiproof verify`.
+- Hash-chained JSONL ledger with optional HMAC; rotation at `rotate_mb` with chain continuity across segments; multi-process safe appends (advisory lock); `aiproof verify` for files, directories and bundles.
+- Redaction performance: regex prefilters and per-string cache (about 0.6 ms per call with all detectors).
 - `wrap()`, `install()`, `record()`, local proxy for OpenAI-compatible APIs and Anthropic.
 - PII / secret redaction, 25 detectors: ФИО, адрес, дата рождения, паспорт РФ, загранпаспорт, в/у, свидетельство о рождении, полис ОМС, ИНН, КПП, ОГРН/ОГРНИП, ОКПО, БИК, счёт, карта, CVV, IBAN, кадастровый номер, госномер, VIN, телефон, e-mail, IPv4, API keys (checksums where the id has one).
 - Deterministic input/output filters (RU/EN), pluggable.
