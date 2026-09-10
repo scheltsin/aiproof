@@ -1,0 +1,24 @@
+stages: [test, attest]
+
+.py: &py
+  image: python:3.12-slim
+  before_script:
+    - pip install -q -e ".[dev]"
+
+test:
+  <<: *py
+  stage: test
+  script:
+    - ruff check src tests
+    - pytest -q
+    - aiproof check . --fail-on never
+
+self-attest:
+  <<: *py
+  stage: attest
+  script:
+    - aiproof attest . --no-ledgers --out evidence.zip
+    - aiproof verify evidence.zip
+  artifacts:
+    paths: [evidence.zip]
+    expire_in: 30 days
