@@ -8,6 +8,8 @@ Good first contributions:
 - **Filter rules**: injection patterns in Russian and English, always with a benign counter-example in `tests/test_filters.py` (false positives are bugs).
 - **Integrations**: LangChain / LlamaIndex callbacks, MCP hooks, Go/JS ports of the ledger spec.
 
+Contributor agreement: by submitting a pull request you assign the exclusive rights to your contribution to the project licensor (Arseniy Scheltsin) so the project can be relicensed as a whole (BSL 1.1 today, Apache-2.0 on the change date, commercial licenses). Add `Signed-off-by:` to your commits to confirm.
+
 Rules: stdlib only in the core package (optional extras may depend on SDKs), no network calls from the library, every behaviour change comes with a test, `ruff check` clean, keep the "never break the host app" rule.
 
 Run: `pip install -e ".[dev]" && pytest -q && ruff check src tests`.

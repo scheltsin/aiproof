@@ -35,12 +35,17 @@ AGENT_FILES = {"AGENTS.md", "CLAUDE.md", ".cursorrules", "copilot-instructions.m
 
 PROVIDER_SIGNS = [
     ("openai", re.compile(r"\bfrom\s+openai\b|\bimport\s+openai\b|require\(['\"]openai['\"]\)|from\s+['\"]openai['\"]|api\.openai\.com")),
+    # foreign SaaS endpoints (relevant for ru-fstek-117 AI-OP-08): OpenAI() without base_url, api.openai.com, Anthropic, DeepSeek, OpenRouter
+    ("openai-saas", re.compile(r"api\.openai\.com|\b(?:Async)?OpenAI\(\s*\)|\b(?:Async)?OpenAI\((?![^)]*base_url)[^)]*\)")),
     ("anthropic", re.compile(r"\banthropic\b", re.I)),
     ("gigachat", re.compile(r"gigachat", re.I)),
     ("yandexgpt", re.compile(r"yandexgpt|llm\.api\.cloud\.yandex|foundationModels", re.I)),
     ("langchain", re.compile(r"\blangchain\b", re.I)),
     ("llama_index", re.compile(r"llama_index|llamaindex", re.I)),
     ("ollama", re.compile(r"\bollama\b|:11434", re.I)),
+    ("deepseek-saas", re.compile(r"api\.deepseek\.com", re.I)),
+    ("openrouter-saas", re.compile(r"openrouter\.ai", re.I)),
+    ("mistral-saas", re.compile(r"api\.mistral\.ai", re.I)),
     ("vllm", re.compile(r"\bvllm\b", re.I)),
     ("transformers", re.compile(r"\bfrom\s+transformers\b|\bimport\s+transformers\b")),
     ("mcp", re.compile(r"\bmcp\b.*\b(server|client)\b|modelcontextprotocol", re.I)),
@@ -214,6 +219,13 @@ def scan_project(root: str = ".", hash_datasets: bool = True, max_dataset_mb: in
         except Exception as e:  # never abort the scan on a single file
             findings.append({"id": "scan.error", "severity": "low", "path": r, "msg": str(e)[:200]})
 
+    FOREIGN = {"openai-saas", "anthropic", "deepseek-saas", "openrouter-saas", "mistral-saas"}
+    for u in llm_usage:
+        foreign = sorted(set(u["providers"]) & FOREIGN)
+        if foreign:
+            findings.append({"id": "llm.foreign_saas", "severity": "medium", "path": u["path"],
+                             "msg": f"call to a foreign SaaS model ({', '.join(foreign)}); in GIS/KII/PD systems the external "
+                                    f"AI service must be protected to the operator's class (FSTEC MD 12.04.2026 p. 3.18)"})
     any_covered = any(u[NAME] for u in llm_usage)
     for u in llm_usage:
         if not u[NAME] and not any_covered and not any(p in ("langchain", "transformers", "mcp") for p in u["providers"]):
@@ -298,6 +310,11 @@ def evaluate_checks(scan: Dict[str, Any]) -> Dict[str, Tuple[str, str]]:
             ("pass", f"{len(scan['llm_usage'])} call site file(s) covered")
     else:
         c["ledger.covers_calls"] = ("n/a", "no LLM client code detected")
+    if scan["llm_usage"]:
+        c["llm.no_foreign_saas"] = ("fail", "foreign SaaS model endpoints in code") if "llm.foreign_saas" in fids else \
+            ("pass", "no foreign SaaS endpoints detected")
+    else:
+        c["llm.no_foreign_saas"] = ("n/a", "no LLM client code detected")
     c["policy.filter_input"] = ("pass", "enabled") if pol.get("filter_input") else ("fail", "filter_input=false")
     c["policy.filter_output"] = ("pass", "enabled") if pol.get("filter_output") else ("fail", "filter_output=false")
     c["policy.redact"] = ("pass", ",".join(pol.get("redact_types", []))) if pol.get("redact") else ("fail", "redact=false")

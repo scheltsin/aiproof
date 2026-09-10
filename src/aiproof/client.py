@@ -172,15 +172,20 @@ class _AsyncStreamProxy(_StreamProxy):
 # ------------------------------------------------------------------ wrapping
 
 def _wrap_method(fn: Callable, g: Guard, provider: str, op: str) -> Callable:
+    from .integrations import mark_sdk_call, unmark_sdk_call
+
     if inspect.iscoroutinefunction(fn):
         @functools.wraps(fn)
         async def awrapper(*args, **kwargs):
             call = g.before(provider, op, str(kwargs.get("model", "")), kwargs)
+            tok = mark_sdk_call()
             try:
                 result = await fn(*args, **kwargs)
             except BaseException as e:
                 g.after(call, error=e)
                 raise
+            finally:
+                unmark_sdk_call(tok)
             if kwargs.get("stream") or op == "stream":
                 return _AsyncStreamProxy(result, g, call)
             g.after(call, result)
@@ -190,11 +195,14 @@ def _wrap_method(fn: Callable, g: Guard, provider: str, op: str) -> Callable:
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
         call = g.before(provider, op, str(kwargs.get("model", "")), kwargs)
+        tok = mark_sdk_call()
         try:
             result = fn(*args, **kwargs)
         except BaseException as e:
             g.after(call, error=e)
             raise
+        finally:
+            unmark_sdk_call(tok)
         if inspect.isawaitable(result):
             async def _await():
                 try:
@@ -258,7 +266,11 @@ def wrap(client: Any, policy: Any = None, provider: Optional[str] = None) -> Any
     >>> client = aiproof.wrap(OpenAI(base_url=...), policy="ru-fstek-117")
     """
     g = guard(policy) if policy is not None else guard()
-    return _Proxy(client, g, provider or _provider_of(client))
+    prov = provider or _provider_of(client)
+    if prov == "gigachat" or (type(client).__module__ or "").startswith("gigachat"):
+        from .integrations import patch_gigachat_instance
+        return patch_gigachat_instance(client, g)
+    return _Proxy(client, g, prov)
 
 
 # ------------------------------------------------------------------ install
@@ -266,10 +278,22 @@ def wrap(client: Any, policy: Any = None, provider: Optional[str] = None) -> Any
 _installed: Dict[str, Callable] = {}
 
 
-def install(policy: Any = None) -> Dict[str, bool]:
-    """Patch the OpenAI / Anthropic SDKs in-process. Returns what was patched."""
+def install(policy: Any = None, http: bool = False, gigachat: bool = True) -> Dict[str, bool]:
+    """Patch SDKs in-process. Returns what was patched.
+
+    * OpenAI / Anthropic SDK classes (always attempted);
+    * official ``gigachat`` SDK (``gigachat=True``);
+    * raw ``requests`` / ``httpx`` calls to LLM endpoints such as the YandexGPT
+      Foundation Models API, GigaChat REST, Ollama, vLLM (``http=True``).
+    """
     g = guard(policy) if policy is not None else guard()
     patched: Dict[str, bool] = {}
+    if gigachat:
+        from .integrations import install_gigachat
+        patched.update(install_gigachat(g))
+    if http:
+        from .integrations import install_http
+        patched.update(install_http(g))
 
     targets = [
         ("openai.resources.chat.completions", "Completions", "create", "openai", "chat.completions"),
@@ -322,6 +346,8 @@ def install(policy: Any = None) -> Dict[str, bool]:
 
 
 def uninstall() -> None:
+    from .integrations import uninstall_all
+    uninstall_all()
     import importlib
     for key, original in list(_installed.items()):
         mod_name, cls_name, meth = key.rsplit(".", 2)

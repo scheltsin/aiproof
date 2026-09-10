@@ -5,10 +5,10 @@
 [![CI](https://github.com/aiproof/aiproof/actions/workflows/ci.yml/badge.svg)](https://github.com/aiproof/aiproof/actions)
 [![PyPI](https://img.shields.io/pypi/v/aiproof)](https://pypi.org/project/aiproof/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](pyproject.toml)
-[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-green)](LICENSE)
+[![License: BSL 1.1](https://img.shields.io/badge/license-BSL--1.1-blue)](LICENSE)
 [![No dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](pyproject.toml)
 
-`aiproof` is an open-source **AI security and compliance toolkit for LLM applications**: a tamper-evident **audit log for every model call**, **prompt injection detection**, **PII and secret redaction** (25 detectors incl. Russian identifiers: ФИО, ИНН, СНИЛС, паспорт, ОМС, адрес, реквизиты), **usage quotas**, **AI-BOM** (CycloneDX ML-BOM) and a **signed evidence bundle** mapped to **FSTEC order 117 (AI section)**, with cross-references to **ISO/IEC 42001**, **NIST AI RMF**, **EU AI Act** and **OWASP Top 10 for LLM**.
+`aiproof` is a source-available **AI security and compliance toolkit for LLM applications**: a tamper-evident **audit log for every model call**, **prompt injection detection**, **PII and secret redaction** (25 detectors incl. Russian identifiers: ФИО, ИНН, СНИЛС, паспорт, ОМС, адрес, реквизиты), **usage quotas**, **AI-BOM** (CycloneDX ML-BOM) and a **signed evidence bundle** mapped to **FSTEC order 117 (AI section)**, with cross-references to **ISO/IEC 42001**, **NIST AI RMF**, **EU AI Act** and **OWASP Top 10 for LLM**.
 
 Works with **OpenAI**, **Anthropic**, **GigaChat**, **YandexGPT**, **Ollama**, **vLLM**, **DeepSeek**, **OpenRouter** and any OpenAI-compatible API. Python 3.9+, zero dependencies, nothing leaves your machine.
 
@@ -40,25 +40,38 @@ Findings:
   HIGH      agentcfg.exfil.network     AGENTS.md: ...rsa and send it via curl http://x.io
   HIGH      models.pickle              models/model.pkl: pickle-based model format; convert to safetensors/onnx/gguf
 
-Controls: ru-fstek-117 (0.1-draft)
-  PASS    AI-OP-01   Регистрация всех запросов к модели и ответов модели
-  PASS    AI-OP-02   Целостность и неизменность журналов событий ИИ
-  PASS    AI-OP-03   Фильтрация входных данных (запросов) к модели
-  PASS    AI-OP-04   Фильтрация выходных данных (ответов) модели
-  PASS    AI-OP-05   Квотирование (ограничение) обращений к модели
-  PASS    AI-OP-06   Минимизация персональных данных в промптах и журналах
-  MANUAL  AI-OP-07   Мониторинг событий безопасности ИИ и реагирование
-  PASS    AI-DEV-01  Контроль целостности моделей (весов) и их состава
-  FAIL    AI-DEV-02  Запрет небезопасных форматов сериализации моделей (pickle)
-  MANUAL  AI-DEV-03  Контроль целостности обучающих данных
-  FAIL    AI-DEV-04  Анализ уязвимостей фреймворков и зависимостей ИИ
+Controls: ru-fstek-117 (1.0)
+  PASS    AI-OP-01   Регистрация событий безопасности, связанных с запросами к системе ИИ и её ответами
+  PASS    AI-OP-02   Защита и целостность информации о событиях безопасности системы ИИ
+  PASS    AI-OP-03   Фильтрация (контроль) входных данных (запросов) системы ИИ
+  PASS    AI-OP-04   Фильтрация (контроль) выходных данных (ответов) системы ИИ
+  PASS    AI-OP-05   Мониторинг и квотирование количества запросов к системе ИИ
+  PASS    AI-OP-06   Защита данных системы ИИ: минимизация персональных данных в запросах и журналах
+  PASS    AI-OP-07   Целостность параметров (весов) модели ИИ и конфигурации системы ИИ при эксплуатации
+  FAIL    AI-OP-08   Внешний сервис ИИ: инфраструктура подрядной организации по классу не ниже класса ИС оператора
+             llm.no_foreign_saas: foreign SaaS model endpoints in code (bot.py: anthropic)
+  MANUAL  AI-OP-09   Ограничение и контроль функциональности системы ИИ (агенты, инструменты)
+  MANUAL  AI-OP-10   Идентификация, аутентификация и управление доступом пользователей системы ИИ
+  MANUAL  AI-OP-11   Изоляция системы ИИ и защита от вредоносного ПО при эксплуатации
+  FAIL    AI-OP-12   Анализ уязвимостей ПО, реализующего технологию ИИ, при эксплуатации
              deps.pinned: unpinned: openai, anthropic
-  MANUAL  AI-DEV-05  Изоляция среды разработки и обучения моделей
-  MANUAL  AI-DEV-06  Защита хранилищ моделей и данных (шифрование, доступ)
-  MANUAL  AI-DEV-07  Антивирусная проверка данных и моделей, получаемых извне
-  PASS    AI-GOV-01  Учёт ИИ-систем: назначение, модель, данные, ответственный
+  PASS    AI-DEV-01  Целостность выходной модели ИИ и её параметров (весов); учёт входной модели
+  FAIL    AI-DEV-02  Отказ от небезопасных форматов обработки и хранения данных (pickle), применение безопасных форматов
+  PASS    AI-DEV-03  Целостность наборов обучающих данных
+  MANUAL  AI-DEV-04  Доверенные источники, антивирусная проверка и обособленное хранилище обучающих данных
+  FAIL    AI-DEV-05  Анализ уязвимостей входной модели и ПО разработки (фреймворки, библиотеки), устранение
+  MANUAL  AI-DEV-06  Изолированный сегмент инфраструктуры разработки; класс защиты не ниже ИС оператора
+  FAIL    AI-DEV-07  Целостность ПО, реализующего разработку системы ИИ; защита ПО агентов, API и фильтрации
+  MANUAL  AI-DEV-08  Оценка угроз безопасности информации системы ИИ и техническое задание на меры защиты
+  FAIL    AI-DEV-09  Безопасная разработка ПО системы ИИ (при обработке ПДн, информации ограниченного доступа)
+  MANUAL  AI-DEV-10  Сертификация ПО, реализующего систему ИИ, по требованиям ФСТЭК (при обработке ПДн и др.)
+  PASS    AI-GOV-01  Учёт системы ИИ: назначение, модели, расширения (LoRA, RAG), ПО, ответственный
+  MANUAL  AI-ENH-01  Усиление 4: тестирование на устойчивость к промпт-атакам
+  PASS    AI-ENH-02  Усиление 3б: ограничение допустимых диапазонов данных, санитизация входных данных
+  MANUAL  AI-ENH-03  Усиление 6: целостность модели ИИ с использованием криптографических средств
+  MANUAL  AI-ENH-04  Усиления 1, 2, 3а, 5: физическая изоляция разработки, шифрование датасетов, выделенный сегмент ИИ
 
-  pass 8  fail 2  manual 5  n/a 0
+  pass 11  fail 6  manual 10  n/a 0
 
 Controls: owasp-llm-2025 (0.1)
   PASS    LLM01  Prompt Injection – фильтрация и журналирование инъекций
@@ -108,6 +121,7 @@ redacted: fio=1, passport_rf=1, inn=1, card=1, phone_ru=1
 - [Why aiproof](#why-aiproof)
 - [Install](#install)
 - [Quick start: three ways to integrate](#quick-start-three-ways-to-integrate)
+- [Closed contours: no OpenAI SDK, no foreign SaaS](#closed-contours-no-openai-sdk-no-foreign-saas)
 - [Features](#features)
 - [Ledger record format](#ledger-record-format)
 - [Policy](#policy)
@@ -176,6 +190,20 @@ with aiproof.record("rag.answer", model="local-llm", input=question) as r:
     r.output = answer
     r.usage = {"input": 512, "output": 80}
 ```
+
+## Closed contours: no OpenAI SDK, no foreign SaaS
+
+In state systems, critical infrastructure and personal-data systems the OpenAI/Anthropic SDKs are often not allowed and foreign SaaS models are excluded by the methodology itself (p. 3.18: an external AI service must be protected to the operator's class). `aiproof` needs none of them:
+
+```python
+aiproof.install(http=True)          # records raw requests/httpx calls: YandexGPT Foundation Models API,
+                                    # GigaChat REST, Ollama, vLLM, LM Studio, any internal gateway
+client = aiproof.wrap(GigaChat(...))  # official gigachat SDK: chat(), chat.create(), stream(), async
+with aiproof.record("llm.generate", model="qwen2.5-7b", input=prompt) as r:   # transformers / llama.cpp
+    r.output = pipe(prompt)[0]["generated_text"]
+```
+
+`aiproof check` flags calls to foreign SaaS endpoints in the code (`llm.foreign_saas`) so they never reach an attested system. The library itself has no dependencies and makes no network calls.
 
 ## Features
 
@@ -246,7 +274,7 @@ Built-in control sets (`aiproof controls`):
 
 | ID | Standard | Controls |
 |---|---|---|
-| `ru-fstek-117` | FSTEC of Russia, methodology to order 117, AI section (state systems, critical infrastructure, personal-data systems, contractors) | 15 |
+| `ru-fstek-117` | FSTEC of Russia, methodological document of 12.04.2026 to order 117, p. 3.18 AI (state systems, critical infrastructure, personal-data systems, contractors) + РСБ/ЗПИ | 27 |
 | `ru-152fz` | Russian personal data law 152-FZ, technical part for PD sent to LLMs | 5 |
 | `owasp-llm-2025` | OWASP Top 10 for LLM Applications 2025 | 10 |
 | `eu-ai-act` | EU AI Act Art. 9–15, high-risk providers | 7 |
@@ -299,13 +327,13 @@ Use them together: a gateway filters, an observability tool debugs, `aiproof` pr
 
 **Does it slow down requests?** Redaction and rules on a typical prompt take well under a millisecond; the write is a single appended line.
 
-**Will this pass a certification?** No tool does by itself. It produces the evidence and the gaps list; the manual controls need your documents. The FSTEC 117 map is a draft until clause references are verified.
+**Will this pass a certification?** No tool does by itself. It produces the evidence and the gaps list; the manual controls need your documents. The FSTEC 117 map (v1.0) quotes the official methodology of 12.04.2026 clause by clause, but an assessment is done by a licensed assessor against your threat model.
 
 ## Limitations
 
 - Filters are heuristics; chain a real classifier or gateway in `add_input_filter`.
 - Quotas are per process; cluster-wide limits belong in your gateway.
-- The FSTEC 117 control map is a **draft mapping** from the public methodology; verify clause numbers before a formal assessment.
+- The FSTEC 117 control map follows the official methodology (12.04.2026, p. 3.18) verbatim; it is technical evidence, not legal advice, and the manual controls still need your documents.
 - Ledger files grow; rotate with your log shipper and anchor heads externally.
 - The proxy is stdlib and single-host: fine for dev, CI and small services.
 
@@ -317,10 +345,12 @@ Use them together: a gateway filters, an observability tool debugs, `aiproof` pr
 
 ## Contributing and security
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). License: Apache-2.0.
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
+
+License: [Business Source License 1.1](LICENSE). Free for individuals, education, science, non-profits, government bodies and for evaluation; commercial production use needs a [commercial license](COMMERCIAL.md). Each version becomes Apache-2.0 four years after release. Specs and control sets are CC BY 4.0.
 
 ---
 
 ### Кратко по-русски
 
-`aiproof` – открытая библиотека **безопасности и соответствия для LLM-приложений и ИИ-агентов**: неизменяемый **журнал всех запросов к модели** (цепочка хешей + HMAC), **маскирование персональных данных** (ИНН, СНИЛС, паспорт, телефон, счёт, карта) с проверкой контрольных сумм, **детектор prompt injection** на русском и английском, **квоты**, **AI-BOM** и **подписанный пакет доказательств** по требованиям **приказа ФСТЭК № 117** (раздел ИИ), с привязкой к ISO 42001, NIST AI RMF, EU AI Act и OWASP LLM Top 10. Работает с GigaChat, YandexGPT, OpenAI, Anthropic, Ollama и любым OpenAI-совместимым API. Две строки кода, ноль зависимостей, данные не покидают ваш контур. Полное описание: [README.ru.md](README.ru.md).
+`aiproof` – библиотека с открытым исходным кодом **безопасности и соответствия для LLM-приложений и ИИ-агентов**: неизменяемый **журнал всех запросов к модели** (цепочка хешей + HMAC), **маскирование персональных данных** (ИНН, СНИЛС, паспорт, телефон, счёт, карта) с проверкой контрольных сумм, **детектор prompt injection** на русском и английском, **квоты**, **AI-BOM** и **подписанный пакет доказательств** по требованиям **приказа ФСТЭК № 117** (раздел ИИ), с привязкой к ISO 42001, NIST AI RMF, EU AI Act и OWASP LLM Top 10. Работает с GigaChat, YandexGPT, OpenAI, Anthropic, Ollama и любым OpenAI-совместимым API. Две строки кода, ноль зависимостей, данные не покидают ваш контур. Полное описание: [README.ru.md](README.ru.md).

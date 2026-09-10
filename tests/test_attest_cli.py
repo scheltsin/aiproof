@@ -13,7 +13,8 @@ from aiproof.cli import main
 def project(tmp_path, monkeypatch):
     (tmp_path / "data").mkdir()
     (tmp_path / "models").mkdir()
-    (tmp_path / "app.py").write_text("from openai import OpenAI\nimport aiproof\nc = aiproof.wrap(OpenAI())\n")
+    (tmp_path / "app.py").write_text("from openai import OpenAI\nimport aiproof\n"
+                                     "c = aiproof.wrap(OpenAI(base_url='https://gigachat.devices.sberbank.ru/api/v1'))\n")
     (tmp_path / "requirements.txt").write_text("openai==1.50.0\ntorch==2.4.0\n")
     (tmp_path / "data" / "train.csv").write_text("a,b\n1,2\n")
     with open(tmp_path / "models" / "m.pkl", "wb") as f:
@@ -40,8 +41,17 @@ def test_scan_and_controls(project):
     assert scan["ledgers"][0]["ok"] and scan["ledgers"][0]["has_mac"]
     ev = evaluate_controls(scan, load_controls("ru-fstek-117"))
     by = {r["id"]: r["status"] for r in ev["controls"]}
-    assert by["AI-OP-01"] == "pass" and by["AI-OP-02"] == "pass"
-    assert by["AI-DEV-02"] == "fail" and by["AI-DEV-04"] == "pass" and by["AI-DEV-05"] == "manual"
+    assert by["AI-OP-01"] == "pass" and by["AI-OP-02"] == "pass" and by["AI-OP-08"] == "manual"
+    assert by["AI-DEV-02"] == "fail" and by["AI-DEV-03"] == "pass" and by["AI-DEV-05"] == "manual"
+    assert ev["checks"]["llm.no_foreign_saas"]["status"] == "pass"
+
+
+def test_foreign_saas_detected(project):
+    (project / "bot.py").write_text("from openai import OpenAI\nimport anthropic\nc = OpenAI()\n")
+    scan = scan_project(".")
+    assert any(f["id"] == "llm.foreign_saas" and f["path"] == "bot.py" for f in scan["findings"])
+    ev = evaluate_controls(scan, load_controls("ru-fstek-117"))
+    assert {r["id"]: r["status"] for r in ev["controls"]}["AI-OP-08"] == "fail"
 
 
 def test_bundle_roundtrip_and_tamper(project):
