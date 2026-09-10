@@ -8,10 +8,20 @@
 
 ```python
 import aiproof
-client = aiproof.wrap(OpenAI(base_url="https://gigachat.devices.sberbank.ru/api/v1"), policy="ru-fstek-117")
+from openai import OpenAI
+from anthropic import Anthropic
+
+# выберите провайдера; строка обёртки везде одна и та же
+client = aiproof.wrap(OpenAI(base_url="https://gigachat.devices.sberbank.ru/api/v1"), policy="ru-fstek-117")  # GigaChat
+client = aiproof.wrap(OpenAI(base_url="https://llm.api.cloud.yandex.net/v1"), policy="ru-fstek-117")          # YandexGPT
+client = aiproof.wrap(OpenAI(), policy="ru-fstek-117")                                                        # OpenAI
+client = aiproof.wrap(OpenAI(base_url="http://localhost:11434/v1", api_key="ollama"), policy="ru-fstek-117")  # Ollama
+client = aiproof.wrap(OpenAI(base_url="http://localhost:8000/v1"), policy="ru-fstek-117")                     # vLLM
+client = aiproof.wrap(OpenAI(base_url="https://api.deepseek.com"), policy="ru-fstek-117")                     # DeepSeek
+client = aiproof.wrap(Anthropic(), policy="ru-fstek-117")                                                     # Anthropic
 ```
 
-Две строки. Дальше каждый промпт, ответ, вызов инструмента и ошибка пишутся в журнал с цепочкой хешей, ПДн маскируются до записи на диск, к записи прикладываются находки фильтров (инъекции, утечки), работают квоты.
+Одна строка на клиент, больше ничего не меняется. Дальше каждый промпт, ответ, вызов инструмента и ошибка пишутся в журнал с цепочкой хешей, ПДн маскируются до записи на диск, к записи прикладываются находки фильтров (инъекции, утечки), работают квоты.
 
 ```
 $ aiproof attest

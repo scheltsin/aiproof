@@ -14,10 +14,20 @@ Works with **OpenAI**, **Anthropic**, **GigaChat**, **YandexGPT**, **Ollama**, *
 
 ```python
 import aiproof
-client = aiproof.wrap(OpenAI(base_url="https://gigachat.devices.sberbank.ru/api/v1"), policy="ru-fstek-117")
+from openai import OpenAI
+from anthropic import Anthropic
+
+# pick your provider; the wrapper is the same line everywhere
+client = aiproof.wrap(OpenAI(), policy="ru-fstek-117")                                                        # OpenAI
+client = aiproof.wrap(OpenAI(base_url="https://gigachat.devices.sberbank.ru/api/v1"), policy="ru-fstek-117")  # GigaChat
+client = aiproof.wrap(OpenAI(base_url="https://llm.api.cloud.yandex.net/v1"), policy="ru-fstek-117")          # YandexGPT
+client = aiproof.wrap(OpenAI(base_url="http://localhost:11434/v1", api_key="ollama"), policy="ru-fstek-117")  # Ollama
+client = aiproof.wrap(OpenAI(base_url="http://localhost:8000/v1"), policy="ru-fstek-117")                     # vLLM
+client = aiproof.wrap(OpenAI(base_url="https://api.deepseek.com"), policy="ru-fstek-117")                     # DeepSeek
+client = aiproof.wrap(Anthropic(), policy="ru-fstek-117")                                                     # Anthropic
 ```
 
-Two lines. Every prompt, response, tool call and error is now written to a hash-chained JSONL ledger, PII is masked before it hits disk, injection and leak findings are attached, quotas are enforced.
+One line per client, no other changes. Every prompt, response, tool call and error is now written to a hash-chained JSONL ledger, PII is masked before it hits disk, injection and leak findings are attached, quotas are enforced.
 
 ```
 $ aiproof attest
