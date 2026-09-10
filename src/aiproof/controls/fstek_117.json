@@ -1,0 +1,144 @@
+{
+  "id": "ru-fstek-117",
+  "title": "Методика ФСТЭК России к приказу № 117 (раздел по системам с ИИ)",
+  "version": "0.1-draft",
+  "source": "Методическое обеспечение к приказу ФСТЭК России № 117, раздел о защите информации при применении технологий ИИ (12.04.2026). Мэппинг черновой: номера пунктов сверяются с официальным текстом, см. docs/controls/fstek-117.md",
+  "note": "Статусы: pass = подтверждено автоматически, fail = проверка не пройдена, manual = требуется ручное подтверждение (аттестующий прикладывает документ).",
+  "controls": [
+    {
+      "id": "AI-OP-01",
+      "phase": "operation",
+      "title_ru": "Регистрация всех запросов к модели и ответов модели",
+      "title_en": "Log every model request and response",
+      "checks": ["ledger.present", "ledger.verified", "ledger.covers_calls"],
+      "evidence": ["ledger/*.jsonl", "ledger-verify.json"],
+      "xref": {"iso42001": "A.6.2.6, A.8.x (monitoring)", "nist_ai_rmf": "MEASURE 2.x, MANAGE 4.1", "eu_ai_act": "Art. 12 (record-keeping)"}
+    },
+    {
+      "id": "AI-OP-02",
+      "phase": "operation",
+      "title_ru": "Целостность и неизменность журналов событий ИИ",
+      "title_en": "Tamper-evident event logs",
+      "checks": ["ledger.verified", "ledger.mac"],
+      "evidence": ["ledger-verify.json"],
+      "xref": {"iso42001": "A.6.2.6", "nist_ai_rmf": "MANAGE 4.1"}
+    },
+    {
+      "id": "AI-OP-03",
+      "phase": "operation",
+      "title_ru": "Фильтрация входных данных (запросов) к модели",
+      "title_en": "Input filtering (prompt injection, hidden content)",
+      "checks": ["policy.filter_input"],
+      "evidence": ["policy.json", "ledger findings.input"],
+      "xref": {"nist_ai_rmf": "MEASURE 2.7", "owasp_llm": "LLM01"}
+    },
+    {
+      "id": "AI-OP-04",
+      "phase": "operation",
+      "title_ru": "Фильтрация выходных данных (ответов) модели",
+      "title_en": "Output filtering (secret / PII leakage)",
+      "checks": ["policy.filter_output"],
+      "evidence": ["policy.json", "ledger findings.output"],
+      "xref": {"owasp_llm": "LLM02, LLM06"}
+    },
+    {
+      "id": "AI-OP-05",
+      "phase": "operation",
+      "title_ru": "Квотирование (ограничение) обращений к модели",
+      "title_en": "Quotas on model usage",
+      "checks": ["policy.quotas"],
+      "evidence": ["policy.json"],
+      "xref": {"owasp_llm": "LLM10"}
+    },
+    {
+      "id": "AI-OP-06",
+      "phase": "operation",
+      "title_ru": "Минимизация персональных данных в промптах и журналах",
+      "title_en": "PII minimisation in prompts and logs",
+      "checks": ["policy.redact"],
+      "evidence": ["policy.json", "ledger request.pii"],
+      "xref": {"ru_152fz": "ст. 5 (минимизация)", "eu_ai_act": "Art. 10"}
+    },
+    {
+      "id": "AI-OP-07",
+      "phase": "operation",
+      "title_ru": "Мониторинг событий безопасности ИИ и реагирование",
+      "title_en": "Monitoring of AI security events",
+      "checks": ["ledger.present", "manual"],
+      "evidence": ["ledger", "документ: регламент мониторинга / подключение к SIEM"],
+      "xref": {"nist_ai_rmf": "MANAGE 4.x"}
+    },
+    {
+      "id": "AI-DEV-01",
+      "phase": "development",
+      "title_ru": "Контроль целостности моделей (весов) и их состава",
+      "title_en": "Model integrity: hashes and AI-BOM",
+      "checks": ["models.inventoried", "models.hashed"],
+      "evidence": ["aibom.json", "attest.json models[]"],
+      "xref": {"iso42001": "A.6.2.4", "cyclonedx": "ML-BOM"}
+    },
+    {
+      "id": "AI-DEV-02",
+      "phase": "development",
+      "title_ru": "Запрет небезопасных форматов сериализации моделей (pickle)",
+      "title_en": "No pickle-based model formats",
+      "checks": ["models.no_pickle"],
+      "evidence": ["attest.json findings[]"],
+      "xref": {"owasp_llm": "LLM03 (supply chain)"}
+    },
+    {
+      "id": "AI-DEV-03",
+      "phase": "development",
+      "title_ru": "Контроль целостности обучающих данных",
+      "title_en": "Training data integrity",
+      "checks": ["datasets.hashed", "manual"],
+      "evidence": ["aibom.json datasets[]", "документ: реестр датасетов"],
+      "xref": {"iso42001": "A.7.x", "nist_ai_rmf": "MAP 2.x"}
+    },
+    {
+      "id": "AI-DEV-04",
+      "phase": "development",
+      "title_ru": "Анализ уязвимостей фреймворков и зависимостей ИИ",
+      "title_en": "Vulnerability analysis of AI frameworks/dependencies",
+      "checks": ["deps.inventoried", "deps.pinned"],
+      "evidence": ["attest.json dependencies[]", "отчёт SCA (pip-audit / trivy)"],
+      "xref": {"owasp_llm": "LLM03"}
+    },
+    {
+      "id": "AI-DEV-05",
+      "phase": "development",
+      "title_ru": "Изоляция среды разработки и обучения моделей",
+      "title_en": "Isolated development/training environment",
+      "checks": ["manual"],
+      "evidence": ["документ: схема сред, доступы"],
+      "xref": {"iso42001": "A.6.2.x"}
+    },
+    {
+      "id": "AI-DEV-06",
+      "phase": "development",
+      "title_ru": "Защита хранилищ моделей и данных (шифрование, доступ)",
+      "title_en": "Protected model/data storage",
+      "checks": ["manual"],
+      "evidence": ["документ: описание хранилища, политики доступа"],
+      "xref": {}
+    },
+    {
+      "id": "AI-DEV-07",
+      "phase": "development",
+      "title_ru": "Антивирусная проверка данных и моделей, получаемых извне",
+      "title_en": "Malware scan of external models/data",
+      "checks": ["manual"],
+      "evidence": ["отчёт сканера (ClamAV / modelscan)"],
+      "xref": {}
+    },
+    {
+      "id": "AI-GOV-01",
+      "phase": "governance",
+      "title_ru": "Учёт ИИ-систем: назначение, модель, данные, ответственный",
+      "title_en": "AI system inventory and ownership",
+      "checks": ["policy.app_named", "models.inventoried"],
+      "evidence": ["policy.json (app, tags)", "aibom.json"],
+      "xref": {"iso42001": "A.4, A.6.1", "eu_ai_act": "Art. 11 (technical documentation)"}
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+name: "aiproof check"
+description: "Scan a repository for AI security / compliance evidence: model integrity, pickle, unwrapped LLM calls, injected agent instructions, ledger verification. Control map: FSTEC 117 (AI)."
+branding:
+  icon: "shield"
+  color: "blue"
+inputs:
+  path:
+    description: "Directory to scan"
+    default: "."
+  controls:
+    description: "Control set id or path (ru-fstek-117)"
+    default: "ru-fstek-117"
+  fail-on:
+    description: "fail | manual | never"
+    default: "fail"
+  version:
+    description: "aiproof version to install (pip spec)"
+    default: "aiproof"
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      run: python3 -m pip install --quiet "${{ inputs.version }}"
+    - shell: bash
+      run: |
+        aiproof check "${{ inputs.path }}" --controls "${{ inputs.controls }}" --fail-on "${{ inputs.fail-on }}" \
+          --json aiproof-report.json --no-ledgers
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: aiproof-report
+        path: aiproof-report.json

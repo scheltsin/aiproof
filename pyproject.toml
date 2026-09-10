@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+# NOTE: the project name is intentionally referenced in one place per file.
+# To rename the project run:  python scripts/rename.py <newname>
+name = "aiproof"
+version = "0.1.0"
+description = "Tamper-evident audit trail, Russian PII redaction, quotas and compliance evidence for LLM apps and agents. Two lines to integrate."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [{ name = "aiproof contributors" }]
+keywords = ["llm", "ai-security", "audit", "compliance", "fstek", "pii", "prompt-injection", "evidence", "ai-bom"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Security",
+  "Topic :: Software Development :: Libraries",
+]
+dependencies = []
+
+[project.optional-dependencies]
+openai = ["openai>=1.0"]
+anthropic = ["anthropic>=0.20"]
+langchain = ["langchain-core>=0.1"]
+dev = ["pytest>=7", "build", "ruff"]
+
+[project.scripts]
+aiproof = "aiproof.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/aiproof/aiproof"
+Spec = "https://github.com/aiproof/aiproof/tree/main/docs/spec"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+aiproof = ["controls/*.json", "py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py39"

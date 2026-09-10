@@ -1,0 +1,10 @@
+{
+  "preset": "ru-fstek-117",
+  "app": "support-bot",
+  "store_content": "redacted",
+  "tags": { "env": "prod", "owner": "team-support" },
+  "max_requests_per_minute": 300,
+  "max_tokens_per_day": 2000000,
+  "on_injection": "log",
+  "on_secret_leak": "block"
+}
