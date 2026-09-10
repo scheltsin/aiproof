@@ -80,11 +80,24 @@ def _print_controls(ev: Dict[str, Any]) -> None:
     print(f"\n  pass {s['pass']}  fail {s['fail']}  manual {s['manual']}  n/a {s['n/a']}")
 
 
+def cmd_controls(a: argparse.Namespace) -> int:
+    from .attest import list_controls
+    for c in list_controls():
+        print(f"  {c['id']:<16} {c['controls']:>3} controls  v{c['version']:<10} {c['title']}")
+    print(f"\nuse: {NAME} attest --controls ru-fstek-117,owasp-llm-2025   (or a path to your own json)")
+    return 0
+
+
 def cmd_attest(a: argparse.Namespace, check_only: bool = False) -> int:
     from .attest import scan_project, load_controls, evaluate_controls, write_bundle
     scan = scan_project(a.path, hash_datasets=not a.no_hash_datasets)
-    controls = load_controls(a.controls)
-    ev = evaluate_controls(scan, controls)
+    try:
+        sets = [load_controls(n.strip()) for n in a.controls.split(",") if n.strip()]
+    except FileNotFoundError as e:
+        print(_c(str(e), "r"))
+        return 2
+    evs = [evaluate_controls(scan, c) for c in sets]
+    ev = evs[0]
 
     print(_c(f"{NAME} {'check' if check_only else 'attest'} v{VERSION}  root={scan['root']}", "b"))
     print(f"  models {len(scan['models'])}  datasets {len(scan['datasets'])}  deps {len(scan['dependencies'])}"
@@ -95,21 +108,22 @@ def cmd_attest(a: argparse.Namespace, check_only: bool = False) -> int:
         for f in sorted(scan["findings"], key=lambda x: {"critical": 0, "high": 1, "medium": 2, "low": 3}[x["severity"]]):
             col = "r" if f["severity"] in ("critical", "high") else "y"
             print(f"  {_c(f['severity'].upper(), col):<18} {f['id']:<22} {f['path']}: {f['msg']}")
-    _print_controls(ev)
+    for e in evs:
+        _print_controls(e)
 
     if not check_only:
         out = a.out or os.path.join(DEFAULT_DIR, f"evidence-{scan['ts'][:10]}.zip")
-        manifest = write_bundle(scan, ev, out, key=_key(), include_ledgers=not a.no_ledgers)
+        manifest = write_bundle(scan, evs, out, key=_key(), include_ledgers=not a.no_ledgers)
         print(f"\nevidence bundle: {out}  (manifest hash {manifest['hash'][:16]}…, "
               f"{'signed' if 'mac' in manifest else 'unsigned: set ' + ENV_PREFIX + '_KEY'})")
         print(f"verify with:     {NAME} verify {out}")
     if a.json:
-        Path(a.json).write_text(json.dumps({"scan": scan, "controls": ev}, ensure_ascii=False, indent=2), "utf-8")
+        Path(a.json).write_text(json.dumps({"scan": scan, "controls": ev, "control_sets": evs},
+                                           ensure_ascii=False, indent=2), "utf-8")
         print(f"json report:     {a.json}")
 
     fail_on = a.fail_on
-    s = ev["summary"]
-    bad = s["fail"] > 0 or (fail_on == "manual" and s["manual"] > 0)
+    bad = any(e["summary"]["fail"] > 0 or (fail_on == "manual" and e["summary"]["manual"] > 0) for e in evs)
     sev_bad = any(f["severity"] in ("critical", "high") for f in scan["findings"])
     if check_only:
         return 1 if (bad or sev_bad) and fail_on != "never" else 0
@@ -167,13 +181,17 @@ def build_parser() -> argparse.ArgumentParser:
                             ("check", cmd_check, "CI mode: scan + evaluate, exit 1 on failures")):
         s = sub.add_parser(name, help=help_)
         s.add_argument("path", nargs="?", default=".")
-        s.add_argument("--controls", default="ru-fstek-117", help="controls id or path to a controls json")
+        s.add_argument("--controls", default="ru-fstek-117",
+                       help="comma-separated control set ids or json paths (see `%s controls`)" % NAME)
         s.add_argument("--out", default=None, help="evidence bundle path (.zip)")
         s.add_argument("--json", default=None, help="write full json report to this file")
         s.add_argument("--fail-on", default="fail", choices=["fail", "manual", "never"])
         s.add_argument("--no-ledgers", action="store_true", help="do not include ledgers in the bundle")
         s.add_argument("--no-hash-datasets", action="store_true")
         s.set_defaults(fn=fn)
+
+    s = sub.add_parser("controls", help="list built-in control sets (FSTEC 117, OWASP LLM, EU AI Act, ISO 42001, ...)")
+    s.set_defaults(fn=cmd_controls)
 
     s = sub.add_parser("proxy", help="local reverse proxy for OpenAI-compatible APIs (zero code changes)")
     s.add_argument("--upstream", required=True, help="e.g. https://api.openai.com or https://gigachat.devices.sberbank.ru/api")

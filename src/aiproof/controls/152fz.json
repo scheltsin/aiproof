@@ -1,0 +1,84 @@
+{
+  "id": "ru-152fz",
+  "title": "152-ФЗ «О персональных данных» – техническая часть при передаче ПДн в LLM",
+  "version": "0.1",
+  "source": "Принципы обработки (ст. 5), меры по обеспечению безопасности (ст. 19); требования к ИСПДн с 2026 – приказ ФСТЭК № 117. Юридическая квалификация (оператор/обработчик, трансграничная передача) – за юристом.",
+  "controls": [
+    {
+      "id": "PD-01",
+      "phase": "operation",
+      "title_ru": "Минимизация ПДн: маскирование перед передачей и в журналах",
+      "title_en": "Data minimisation before the model and in logs",
+      "checks": [
+        "policy.redact"
+      ],
+      "evidence": [
+        "policy.json",
+        "ledger request.pii"
+      ],
+      "xref": {
+        "ru_fstek_117": "AI-OP-06"
+      }
+    },
+    {
+      "id": "PD-02",
+      "phase": "operation",
+      "title_ru": "Учёт обращений к ПДн через ИИ-систему",
+      "title_en": "Accounting of PD access through the AI system",
+      "checks": [
+        "ledger.present",
+        "ledger.verified"
+      ],
+      "evidence": [
+        "ledger"
+      ],
+      "xref": {
+        "ru_fstek_117": "AI-OP-01"
+      }
+    },
+    {
+      "id": "PD-03",
+      "phase": "operation",
+      "title_ru": "Предотвращение утечки ПДн в ответах модели",
+      "title_en": "Prevent PD leakage in model outputs",
+      "checks": [
+        "policy.filter_output"
+      ],
+      "evidence": [
+        "ledger findings.output leak.*"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "PD-04",
+      "phase": "governance",
+      "title_ru": "Трансграничная передача / внешний провайдер LLM",
+      "title_en": "Cross-border transfer / external LLM provider",
+      "checks": [
+        "manual"
+      ],
+      "evidence": [
+        "attest.json llm_usage providers[]",
+        "документ: уведомление РКН, договор с провайдером"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "PD-05",
+      "phase": "governance",
+      "title_ru": "Учёт ИСПДн, использующих ИИ",
+      "title_en": "Inventory of PD systems using AI",
+      "checks": [
+        "policy.app_named",
+        "models.inventoried"
+      ],
+      "evidence": [
+        "policy.json",
+        "aibom.json"
+      ],
+      "xref": {
+        "ru_fstek_117": "AI-GOV-01"
+      }
+    }
+  ]
+}

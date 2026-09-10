@@ -244,12 +244,38 @@ def scan_project(root: str = ".", hash_datasets: bool = True, max_dataset_mb: in
 
 # ------------------------------------------------------------------ controls
 
+CONTROLS_DIR = Path(__file__).parent / "controls"
+
+
+def list_controls() -> List[Dict[str, str]]:
+    """Available built-in control sets: [{id, title, version, file}]."""
+    out = []
+    for p in sorted(CONTROLS_DIR.glob("*.json")):
+        try:
+            d = json.loads(p.read_text("utf-8"))
+            out.append({"id": d["id"], "title": d.get("title", ""), "version": d.get("version", ""),
+                        "controls": len(d.get("controls", [])), "file": p.name})
+        except Exception:
+            continue
+    return out
+
+
 def load_controls(name: str = "ru-fstek-117") -> Dict[str, Any]:
+    """Load a built-in control set by id (``ru-fstek-117``, ``owasp-llm-2025``, ...) or a JSON file path."""
+    if Path(name).is_file():
+        return json.loads(Path(name).read_text("utf-8"))
+    for p in CONTROLS_DIR.glob("*.json"):
+        try:
+            d = json.loads(p.read_text("utf-8"))
+        except Exception:
+            continue
+        if d.get("id") == name:
+            return d
     fn = name.replace("-", "_").replace("ru_", "") + ".json"
-    p = Path(__file__).parent / "controls" / fn
-    if not p.exists():
-        p = Path(name)  # allow a custom controls file path
-    return json.loads(p.read_text("utf-8"))
+    p = CONTROLS_DIR / fn
+    if p.exists():
+        return json.loads(p.read_text("utf-8"))
+    raise FileNotFoundError(f"unknown control set: {name}; available: {', '.join(c['id'] for c in list_controls())}")
 
 
 def evaluate_checks(scan: Dict[str, Any]) -> Dict[str, Tuple[str, str]]:
@@ -364,14 +390,19 @@ def build_aibom(scan: Dict[str, Any]) -> Dict[str, Any]:
 
 # ------------------------------------------------------------------ bundle
 
-def write_bundle(scan: Dict[str, Any], evaluation: Dict[str, Any], out_path: str, key: Optional[bytes] = None,
+def write_bundle(scan: Dict[str, Any], evaluation: Any, out_path: str, key: Optional[bytes] = None,
                  include_ledgers: bool = True) -> Dict[str, Any]:
+    """``evaluation`` is one evaluate_controls() result or a list of them (first = primary)."""
+    evaluations = evaluation if isinstance(evaluation, list) else [evaluation]
+    evaluation = evaluations[0]
     aibom = build_aibom(scan)
     files: Dict[str, bytes] = {
         "attest.json": json.dumps(scan, ensure_ascii=False, indent=2).encode("utf-8"),
         "controls.json": json.dumps(evaluation, ensure_ascii=False, indent=2).encode("utf-8"),
         "aibom.json": json.dumps(aibom, ensure_ascii=False, indent=2).encode("utf-8"),
     }
+    for extra in evaluations[1:]:
+        files[f"controls-{extra['controls_id']}.json"] = json.dumps(extra, ensure_ascii=False, indent=2).encode("utf-8")
     if scan["policy"].get("file"):
         try:
             files["policy.json"] = (Path(scan["root"]) / scan["policy"]["file"]).read_bytes()
@@ -389,7 +420,9 @@ def write_bundle(scan: Dict[str, Any], evaluation: Dict[str, Any], out_path: str
         "ts": scan["ts"],
         "app": scan["policy"].get("app"),
         "controls_id": evaluation["controls_id"],
+        "controls_sets": [e["controls_id"] for e in evaluations],
         "summary": evaluation["summary"],
+        "summaries": {e["controls_id"]: e["summary"] for e in evaluations},
         "files": {name: {"sha256": sha256_hex(data), "size": len(data)} for name, data in files.items()},
     }
     manifest["hash"] = sha256_hex(canonical({k: v for k, v in manifest.items() if k not in ("hash", "mac")}))

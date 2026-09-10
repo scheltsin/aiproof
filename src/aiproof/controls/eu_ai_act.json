@@ -1,0 +1,125 @@
+{
+  "id": "eu-ai-act",
+  "title": "EU AI Act (Regulation 2024/1689), high-risk AI system obligations, Chapter III Section 2",
+  "version": "0.1",
+  "source": "Articles 9–15 for providers of high-risk AI systems; GPAI transparency (Art. 50) out of scope. Legal interpretation belongs to counsel; this is a technical evidence map.",
+  "controls": [
+    {
+      "id": "ART-9",
+      "phase": "governance",
+      "title_ru": "Система управления рисками",
+      "title_en": "Art. 9 Risk management system",
+      "checks": [
+        "manual"
+      ],
+      "evidence": [
+        "документ: risk register"
+      ],
+      "xref": {
+        "iso42001": "6.1, A.5"
+      }
+    },
+    {
+      "id": "ART-10",
+      "phase": "development",
+      "title_ru": "Управление данными: происхождение, качество, минимизация ПДн",
+      "title_en": "Art. 10 Data and data governance",
+      "checks": [
+        "datasets.hashed",
+        "policy.redact",
+        "manual"
+      ],
+      "evidence": [
+        "aibom.json data[]",
+        "policy.json"
+      ],
+      "xref": {
+        "iso42001": "A.7"
+      }
+    },
+    {
+      "id": "ART-11",
+      "phase": "governance",
+      "title_ru": "Техническая документация (состав системы, модели, зависимости)",
+      "title_en": "Art. 11 Technical documentation (Annex IV)",
+      "checks": [
+        "models.inventoried",
+        "deps.inventoried",
+        "policy.app_named"
+      ],
+      "evidence": [
+        "aibom.json",
+        "attest.json"
+      ],
+      "xref": {
+        "iso42001": "A.6.2.7"
+      }
+    },
+    {
+      "id": "ART-12",
+      "phase": "operation",
+      "title_ru": "Ведение записей: автоматическое журналирование событий за весь срок службы",
+      "title_en": "Art. 12 Record-keeping (automatic logging)",
+      "checks": [
+        "ledger.present",
+        "ledger.verified",
+        "ledger.covers_calls"
+      ],
+      "evidence": [
+        "ledger/*.jsonl",
+        "ledger-verify"
+      ],
+      "xref": {
+        "iso42001": "A.6.2.8",
+        "ru_fstek_117": "AI-OP-01, AI-OP-02"
+      }
+    },
+    {
+      "id": "ART-13",
+      "phase": "governance",
+      "title_ru": "Прозрачность и информация для развёртывающих",
+      "title_en": "Art. 13 Transparency and provision of information",
+      "checks": [
+        "manual"
+      ],
+      "evidence": [
+        "документ: инструкции по использованию"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "ART-14",
+      "phase": "operation",
+      "title_ru": "Человеческий надзор: подтверждение опасных действий, kill switch",
+      "title_en": "Art. 14 Human oversight",
+      "checks": [
+        "ledger.present",
+        "manual"
+      ],
+      "evidence": [
+        "ledger event=approval",
+        "документ: процедура надзора"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "ART-15",
+      "phase": "operation",
+      "title_ru": "Точность, устойчивость, кибербезопасность: фильтры, квоты, целостность моделей",
+      "title_en": "Art. 15 Accuracy, robustness and cybersecurity",
+      "checks": [
+        "policy.filter_input",
+        "policy.filter_output",
+        "policy.quotas",
+        "models.no_pickle"
+      ],
+      "evidence": [
+        "policy.json",
+        "attest.json"
+      ],
+      "xref": {
+        "ru_fstek_117": "AI-OP-03..05, AI-DEV-02"
+      }
+    }
+  ]
+}

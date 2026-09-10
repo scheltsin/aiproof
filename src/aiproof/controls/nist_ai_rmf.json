@@ -1,0 +1,82 @@
+{
+  "id": "nist-ai-rmf",
+  "title": "NIST AI RMF 1.0 + Generative AI Profile (NIST AI 600-1)",
+  "version": "0.1",
+  "source": "Subcategories that technical evidence can support; GOVERN is documentary",
+  "controls": [
+    {
+      "id": "MAP-4.1",
+      "phase": "governance",
+      "title_ru": "Риски третьих сторон: модели, данные, зависимости",
+      "title_en": "MAP 4.1 Third-party AI technologies inventoried",
+      "checks": [
+        "models.inventoried",
+        "deps.inventoried"
+      ],
+      "evidence": [
+        "aibom.json"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "MEASURE-2.7",
+      "phase": "operation",
+      "title_ru": "Безопасность и устойчивость: фильтры инъекций, квоты",
+      "title_en": "MEASURE 2.7 Security and resilience evaluated",
+      "checks": [
+        "policy.filter_input",
+        "policy.quotas",
+        "models.no_pickle"
+      ],
+      "evidence": [
+        "policy.json",
+        "attest.json"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "MEASURE-2.10",
+      "phase": "operation",
+      "title_ru": "Приватность: минимизация ПДн",
+      "title_en": "MEASURE 2.10 Privacy risk examined",
+      "checks": [
+        "policy.redact",
+        "policy.filter_output"
+      ],
+      "evidence": [
+        "ledger request.pii"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "MANAGE-4.1",
+      "phase": "operation",
+      "title_ru": "Мониторинг после развёртывания",
+      "title_en": "MANAGE 4.1 Post-deployment monitoring",
+      "checks": [
+        "ledger.present",
+        "ledger.verified"
+      ],
+      "evidence": [
+        "ledger"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "GAI-2.7",
+      "phase": "operation",
+      "title_ru": "Профиль GenAI: prompt injection, утечка данных, журналирование",
+      "title_en": "GenAI profile: information security (prompt injection, data leakage, logging)",
+      "checks": [
+        "policy.filter_input",
+        "policy.filter_output",
+        "ledger.present"
+      ],
+      "evidence": [
+        "policy.json",
+        "ledger"
+      ],
+      "xref": {}
+    }
+  ]
+}

@@ -1,0 +1,161 @@
+{
+  "id": "owasp-llm-2025",
+  "title": "OWASP Top 10 for LLM Applications 2025",
+  "version": "0.1",
+  "source": "https://genai.owasp.org/llm-top-10/ – mapping of the ten risks to aiproof evidence; risks with no automated evidence are 'manual'",
+  "controls": [
+    {
+      "id": "LLM01",
+      "phase": "operation",
+      "title_ru": "Prompt Injection – фильтрация и журналирование инъекций",
+      "title_en": "Prompt Injection",
+      "checks": [
+        "policy.filter_input",
+        "ledger.present"
+      ],
+      "evidence": [
+        "policy.json",
+        "ledger findings.input"
+      ],
+      "xref": {
+        "ru_fstek_117": "AI-OP-03"
+      }
+    },
+    {
+      "id": "LLM02",
+      "phase": "operation",
+      "title_ru": "Раскрытие чувствительной информации – маскирование ПДн и секретов, фильтр ответов",
+      "title_en": "Sensitive Information Disclosure",
+      "checks": [
+        "policy.redact",
+        "policy.filter_output"
+      ],
+      "evidence": [
+        "ledger request.pii, findings.output"
+      ],
+      "xref": {
+        "ru_fstek_117": "AI-OP-04, AI-OP-06"
+      }
+    },
+    {
+      "id": "LLM03",
+      "phase": "development",
+      "title_ru": "Цепочка поставки – инвентаризация моделей и зависимостей, запрет pickle",
+      "title_en": "Supply Chain",
+      "checks": [
+        "models.hashed",
+        "models.no_pickle",
+        "deps.pinned"
+      ],
+      "evidence": [
+        "aibom.json",
+        "attest.json"
+      ],
+      "xref": {
+        "ru_fstek_117": "AI-DEV-01, AI-DEV-02, AI-DEV-04"
+      }
+    },
+    {
+      "id": "LLM04",
+      "phase": "development",
+      "title_ru": "Отравление данных и модели – целостность датасетов и весов",
+      "title_en": "Data and Model Poisoning",
+      "checks": [
+        "datasets.hashed",
+        "models.hashed",
+        "manual"
+      ],
+      "evidence": [
+        "aibom.json",
+        "документ: происхождение данных"
+      ],
+      "xref": {
+        "ru_fstek_117": "AI-DEV-03"
+      }
+    },
+    {
+      "id": "LLM05",
+      "phase": "operation",
+      "title_ru": "Небезопасная обработка вывода – фильтр ответов",
+      "title_en": "Improper Output Handling",
+      "checks": [
+        "policy.filter_output",
+        "manual"
+      ],
+      "evidence": [
+        "policy.json",
+        "документ: санитизация вывода перед исполнением/рендерингом"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "LLM06",
+      "phase": "operation",
+      "title_ru": "Избыточные полномочия агента – журнал вызовов инструментов, подтверждения",
+      "title_en": "Excessive Agency",
+      "checks": [
+        "ledger.present",
+        "manual"
+      ],
+      "evidence": [
+        "ledger event=tool.call",
+        "документ: матрица прав агента"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "LLM07",
+      "phase": "operation",
+      "title_ru": "Утечка системного промпта – детектор извлечения",
+      "title_en": "System Prompt Leakage",
+      "checks": [
+        "policy.filter_input"
+      ],
+      "evidence": [
+        "ledger findings inj.sysprompt.*"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "LLM08",
+      "phase": "development",
+      "title_ru": "Уязвимости векторов и эмбеддингов – ACL на RAG, журнал retrieve",
+      "title_en": "Vector and Embedding Weaknesses",
+      "checks": [
+        "manual"
+      ],
+      "evidence": [
+        "документ: разграничение доступа к индексам"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "LLM09",
+      "phase": "operation",
+      "title_ru": "Недостоверная информация – контроль качества ответов",
+      "title_en": "Misinformation",
+      "checks": [
+        "manual"
+      ],
+      "evidence": [
+        "документ: процедура проверки ответов, тесты"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "LLM10",
+      "phase": "operation",
+      "title_ru": "Неограниченное потребление – квоты",
+      "title_en": "Unbounded Consumption",
+      "checks": [
+        "policy.quotas"
+      ],
+      "evidence": [
+        "policy.json"
+      ],
+      "xref": {
+        "ru_fstek_117": "AI-OP-05"
+      }
+    }
+  ]
+}

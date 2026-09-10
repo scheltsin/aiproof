@@ -1,0 +1,115 @@
+{
+  "id": "iso-42001",
+  "title": "ISO/IEC 42001:2023 Annex A controls (AI management system)",
+  "version": "0.1",
+  "source": "Annex A control objectives relevant to technical evidence; management-system clauses (4–10) are documents by nature",
+  "controls": [
+    {
+      "id": "A.6.2.4",
+      "phase": "development",
+      "title_ru": "Верификация и валидация системы ИИ (состав, целостность моделей)",
+      "title_en": "AI system verification and validation",
+      "checks": [
+        "models.hashed",
+        "models.no_pickle"
+      ],
+      "evidence": [
+        "aibom.json"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "A.6.2.6",
+      "phase": "operation",
+      "title_ru": "Эксплуатация и мониторинг",
+      "title_en": "AI system operation and monitoring",
+      "checks": [
+        "ledger.present",
+        "policy.filter_input",
+        "policy.filter_output",
+        "policy.quotas"
+      ],
+      "evidence": [
+        "ledger",
+        "policy.json"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "A.6.2.7",
+      "phase": "governance",
+      "title_ru": "Техническая документация системы ИИ",
+      "title_en": "AI system technical documentation",
+      "checks": [
+        "models.inventoried",
+        "deps.inventoried",
+        "policy.app_named"
+      ],
+      "evidence": [
+        "aibom.json",
+        "attest.json"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "A.6.2.8",
+      "phase": "operation",
+      "title_ru": "Регистрация событий системы ИИ",
+      "title_en": "AI system recording of event logs",
+      "checks": [
+        "ledger.present",
+        "ledger.verified",
+        "ledger.mac"
+      ],
+      "evidence": [
+        "ledger/*.jsonl"
+      ],
+      "xref": {
+        "ru_fstek_117": "AI-OP-01, AI-OP-02"
+      }
+    },
+    {
+      "id": "A.7.4",
+      "phase": "development",
+      "title_ru": "Качество данных для систем ИИ",
+      "title_en": "Quality of data for AI systems",
+      "checks": [
+        "datasets.hashed",
+        "manual"
+      ],
+      "evidence": [
+        "aibom.json data[]"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "A.7.5",
+      "phase": "development",
+      "title_ru": "Происхождение данных",
+      "title_en": "Data provenance",
+      "checks": [
+        "datasets.hashed",
+        "manual"
+      ],
+      "evidence": [
+        "aibom.json",
+        "документ: реестр источников"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "A.10.3",
+      "phase": "governance",
+      "title_ru": "Поставщики: модели и зависимости третьих сторон",
+      "title_en": "Suppliers (third-party models and components)",
+      "checks": [
+        "deps.pinned",
+        "models.inventoried"
+      ],
+      "evidence": [
+        "aibom.json"
+      ],
+      "xref": {}
+    }
+  ]
+}

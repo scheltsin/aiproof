@@ -7,12 +7,12 @@ build-backend = "setuptools.build_meta"
 # To rename the project run:  python scripts/rename.py <newname>
 name = "aiproof"
 version = "0.1.0"
-description = "Tamper-evident audit trail, Russian PII redaction, quotas and compliance evidence for LLM apps and agents. Two lines to integrate."
+description = "LLM audit log, prompt injection detection, PII redaction (ИНН, СНИЛС) and compliance evidence (FSTEC 117, OWASP LLM, ISO 42001, EU AI Act) for AI apps and agents. Two lines to integrate."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "Apache-2.0" }
 authors = [{ name = "aiproof contributors" }]
-keywords = ["llm", "ai-security", "audit", "compliance", "fstek", "pii", "prompt-injection", "evidence", "ai-bom"]
+keywords = ["llm", "ai-security", "llm-security", "audit-log", "compliance", "fstec", "fstek-117", "152-fz", "pii-redaction", "prompt-injection", "ai-governance", "ai-bom", "cyclonedx", "owasp-llm", "iso-42001", "eu-ai-act", "nist-ai-rmf", "gigachat", "yandexgpt", "openai", "anthropic", "tamper-evident", "evidence"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
