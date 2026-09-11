@@ -5,7 +5,7 @@ import zipfile
 
 import pytest
 
-from aiproof.attest import scan_project, load_controls, evaluate_controls, write_bundle, verify_bundle
+from aiproof.attest import evaluate_controls, load_controls, scan_project, verify_bundle, write_bundle
 from aiproof.cli import main
 
 

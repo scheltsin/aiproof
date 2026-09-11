@@ -1,21 +1,34 @@
-name: "aiproof check"
-description: "Scan a repository for AI security / compliance evidence: model integrity, pickle, unwrapped LLM calls, injected agent instructions, ledger verification. Control map: FSTEC 117 (AI)."
+name: "aiproof AI security check"
+description: "Scan a repo for LLM/AI security and compliance evidence: pickle models, unwrapped LLM calls, injected agent files, FSTEC 117, OWASP LLM Top 10"
+author: "Arseniy Scheltsin"
 branding:
   icon: "shield"
   color: "blue"
 inputs:
   path:
     description: "Directory to scan"
+    required: false
     default: "."
   controls:
-    description: "Control set id or path (ru-fstek-117)"
+    description: "Comma-separated control sets: ru-fstek-117, ru-152fz, owasp-llm-2025, eu-ai-act, iso-42001, nist-ai-rmf, or a path to your own JSON"
+    required: false
     default: "ru-fstek-117"
   fail-on:
-    description: "fail | manual | never"
+    description: "When to fail the job: fail (any FAIL control or high/critical finding), manual (also MANUAL controls), never"
+    required: false
     default: "fail"
   version:
-    description: "aiproof version to install (pip spec)"
+    description: "aiproof version to install (pip spec, e.g. aiproof==0.1.0; '.' installs the checked-out repository)"
+    required: false
     default: "aiproof"
+  report:
+    description: "Path of the JSON report artifact"
+    required: false
+    default: "aiproof-report.json"
+outputs:
+  report:
+    description: "Path to the JSON report"
+    value: ${{ inputs.report }}
 runs:
   using: "composite"
   steps:
@@ -24,9 +37,9 @@ runs:
     - shell: bash
       run: |
         aiproof check "${{ inputs.path }}" --controls "${{ inputs.controls }}" --fail-on "${{ inputs.fail-on }}" \
-          --json aiproof-report.json --no-ledgers
-    - uses: actions/upload-artifact@v4
+          --json "${{ inputs.report }}" --no-ledgers
+    - uses: actions/upload-artifact@v5
       if: always()
       with:
         name: aiproof-report
-        path: aiproof-report.json
+        path: ${{ inputs.report }}

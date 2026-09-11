@@ -17,7 +17,7 @@ import zlib
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from ._meta import DEFAULT_DIR, EVIDENCE_FORMAT, NAME, VERSION, POLICY_FILE
+from ._meta import DEFAULT_DIR, EVIDENCE_FORMAT, NAME, POLICY_FILE, VERSION
 from .config import load_policy
 from .filters import scan_text
 from .ledger import canonical, sha256_hex, verify_file
@@ -28,7 +28,7 @@ SKIP_DIRS = {".git", ".hg", ".svn", "node_modules", "__pycache__", ".venv", "ven
 MODEL_EXT = {".pt", ".pth", ".bin", ".safetensors", ".gguf", ".ggml", ".onnx", ".pkl", ".pickle", ".h5",
              ".ckpt", ".pb", ".tflite", ".joblib", ".npz", ".msgpack"}
 DATASET_EXT = {".csv", ".parquet", ".jsonl", ".arrow", ".tsv"}
-DATASET_DIR_HINT = re.compile(r"(^|/)(data|datasets?|train|training|corpus|eval)(/|$)", re.I)
+DATASET_DIR_HINT = re.compile(r"(^|/)(data|datasets?|train|training|corpus|eval)(/|$)", re.IGNORECASE)
 SOURCE_EXT = {".py", ".js", ".ts", ".tsx", ".jsx", ".go", ".java", ".kt", ".cs", ".rb", ".php", ".rs"}
 AGENT_FILES = {"AGENTS.md", "CLAUDE.md", ".cursorrules", "copilot-instructions.md", "SKILL.md", ".mcp.json",
                "mcp.json", "GEMINI.md", ".windsurfrules", "claude_desktop_config.json"}
@@ -37,18 +37,18 @@ PROVIDER_SIGNS = [
     ("openai", re.compile(r"\bfrom\s+openai\b|\bimport\s+openai\b|require\(['\"]openai['\"]\)|from\s+['\"]openai['\"]|api\.openai\.com")),
     # foreign SaaS endpoints (relevant for ru-fstek-117 AI-OP-08): OpenAI() without base_url, api.openai.com, Anthropic, DeepSeek, OpenRouter
     ("openai-saas", re.compile(r"api\.openai\.com|\b(?:Async)?OpenAI\(\s*\)|\b(?:Async)?OpenAI\((?![^)]*base_url)[^)]*\)")),
-    ("anthropic", re.compile(r"\banthropic\b", re.I)),
-    ("gigachat", re.compile(r"gigachat", re.I)),
-    ("yandexgpt", re.compile(r"yandexgpt|llm\.api\.cloud\.yandex|foundationModels", re.I)),
-    ("langchain", re.compile(r"\blangchain\b", re.I)),
-    ("llama_index", re.compile(r"llama_index|llamaindex", re.I)),
-    ("ollama", re.compile(r"\bollama\b|:11434", re.I)),
-    ("deepseek-saas", re.compile(r"api\.deepseek\.com", re.I)),
-    ("openrouter-saas", re.compile(r"openrouter\.ai", re.I)),
-    ("mistral-saas", re.compile(r"api\.mistral\.ai", re.I)),
-    ("vllm", re.compile(r"\bvllm\b", re.I)),
+    ("anthropic", re.compile(r"\banthropic\b", re.IGNORECASE)),
+    ("gigachat", re.compile(r"gigachat", re.IGNORECASE)),
+    ("yandexgpt", re.compile(r"yandexgpt|llm\.api\.cloud\.yandex|foundationModels", re.IGNORECASE)),
+    ("langchain", re.compile(r"\blangchain\b", re.IGNORECASE)),
+    ("llama_index", re.compile(r"llama_index|llamaindex", re.IGNORECASE)),
+    ("ollama", re.compile(r"\bollama\b|:11434", re.IGNORECASE)),
+    ("deepseek-saas", re.compile(r"api\.deepseek\.com", re.IGNORECASE)),
+    ("openrouter-saas", re.compile(r"openrouter\.ai", re.IGNORECASE)),
+    ("mistral-saas", re.compile(r"api\.mistral\.ai", re.IGNORECASE)),
+    ("vllm", re.compile(r"\bvllm\b", re.IGNORECASE)),
     ("transformers", re.compile(r"\bfrom\s+transformers\b|\bimport\s+transformers\b")),
-    ("mcp", re.compile(r"\bmcp\b.*\b(server|client)\b|modelcontextprotocol", re.I)),
+    ("mcp", re.compile(r"\bmcp\b.*\b(server|client)\b|modelcontextprotocol", re.IGNORECASE)),
 ]
 AIPROOF_SIGN = re.compile(rf"\b{NAME}\.(wrap|install|record|Guard)\b|\bfrom\s+{NAME}\b|\bimport\s+{NAME}\b")
 
@@ -85,7 +85,7 @@ def _model_format(p: Path) -> Tuple[str, bool]:
         try:
             with zipfile.ZipFile(p) as z:
                 names = z.namelist()
-            if any(n.endswith("data.pkl") or n.endswith(".pkl") for n in names):
+            if any(n.endswith((".pkl", "data.pkl")) for n in names):
                 return "torch-zip(pickle)", True
             return "zip", False
         except Exception:
@@ -105,7 +105,7 @@ def _model_format(p: Path) -> Tuple[str, bool]:
 
 def _walk(root: Path):
     for dirpath, dirnames, filenames in os.walk(root):
-        dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS and not d.startswith(".") or d == DEFAULT_DIR]
+        dirnames[:] = [d for d in dirnames if (d not in SKIP_DIRS and not d.startswith(".")) or d == DEFAULT_DIR]
         for fn in filenames:
             yield Path(dirpath) / fn
 
@@ -169,7 +169,7 @@ def scan_project(root: str = ".", hash_datasets: bool = True, max_dataset_mb: in
             if name == "pyproject.toml":
                 dep_files.append(r)
                 txt = p.read_text("utf-8", "replace")
-                m = re.search(r"dependencies\s*=\s*\[(.*?)\]", txt, re.S)
+                m = re.search(r"dependencies\s*=\s*\[(.*?)\]", txt, re.DOTALL)
                 if m:
                     items = re.findall(r"['\"]([^'\"]+)['\"]", m.group(1))
                     deps.extend(dict(d, file=r) for d in _parse_requirements("\n".join(items)))

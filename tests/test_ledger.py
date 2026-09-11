@@ -1,7 +1,7 @@
 import json
 import os
 
-from aiproof.ledger import Ledger, verify_file, GENESIS
+from aiproof.ledger import GENESIS, Ledger, verify_file
 
 
 def test_chain_and_verify(tmp_path):
@@ -73,7 +73,7 @@ def test_forged_chain_without_key_fails_mac(tmp_path):
 
 
 def test_rotation_keeps_chain(tmp_path):
-    from aiproof.ledger import verify_chain, ledger_files
+    from aiproof.ledger import ledger_files, verify_chain
     p = tmp_path / "ledger.jsonl"
     led = Ledger(str(p), app="t", rotate_mb=0)
     led.rotate_bytes = 600  # tiny segments for the test

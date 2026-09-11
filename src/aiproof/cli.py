@@ -41,8 +41,8 @@ def cmd_init(a: argparse.Namespace) -> int:
 
 
 def cmd_verify(a: argparse.Namespace) -> int:
-    from .ledger import verify_file, verify_chain
     from .attest import verify_bundle
+    from .ledger import verify_chain, verify_file
     key = _key()
     rc = 0
     paths: List[str] = a.paths or [os.path.join(DEFAULT_DIR, "ledger.jsonl")]
@@ -98,7 +98,7 @@ def cmd_controls(a: argparse.Namespace) -> int:
 
 
 def cmd_attest(a: argparse.Namespace, check_only: bool = False) -> int:
-    from .attest import scan_project, load_controls, evaluate_controls, write_bundle
+    from .attest import evaluate_controls, load_controls, scan_project, write_bundle
     scan = scan_project(a.path, hash_datasets=not a.no_hash_datasets)
     try:
         sets = [load_controls(n.strip()) for n in a.controls.split(",") if n.strip()]
@@ -150,7 +150,7 @@ def cmd_proxy(a: argparse.Namespace) -> int:
 
 
 def cmd_redact(a: argparse.Namespace) -> int:
-    from .redact import redact, DETECTORS
+    from .redact import DETECTORS, redact
     if a.types:
         for d in DETECTORS:
             print(f"  {d.name:<16} {'checksum' if d.validator else 'pattern/context'}")

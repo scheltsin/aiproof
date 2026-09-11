@@ -1,4 +1,4 @@
-from aiproof.filters import scan_text, scan_output_secrets, max_severity
+from aiproof.filters import max_severity, scan_output_secrets, scan_text
 
 
 def rules(text):

@@ -89,7 +89,7 @@ def response_usage(obj: Any) -> Dict[str, int]:
 def wrap_positional(fn: Callable, g: Guard, provider: str, op: str, model_getter: Callable[[], str],
                     stream: bool = False) -> Callable:
     """Wrap ``fn(payload, *rest, **kw)`` where the request is the first positional argument."""
-    from .client import _StreamProxy, _AsyncStreamProxy
+    from .client import _AsyncStreamProxy, _StreamProxy
 
     def _payload(args, kwargs):
         return args[0] if args else kwargs.get("payload", kwargs)

@@ -9,8 +9,8 @@ Every finding is written to the ledger; blocking is a policy decision.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, asdict
-from typing import Callable, Dict, List, Any
+from dataclasses import asdict, dataclass
+from typing import Any, Callable, Dict, List
 
 from . import redact as _redact
 

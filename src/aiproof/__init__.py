@@ -15,21 +15,37 @@ Anything else::
     with aiproof.record("rag.answer", model="local-llm", input=q) as r:
         r.output = answer
 """
-from ._meta import NAME, VERSION as __version__
-from .config import Policy, load_policy, PRESETS
-from .core import Guard, Blocked
-from .quota import QuotaExceeded
+from ._meta import NAME
+from ._meta import VERSION as __version__
+from .client import guard, install, record, uninstall, wrap
+from .config import PRESETS, Policy, load_policy
+from .core import Blocked, Guard
+from .filters import FilterFinding, add_input_filter, add_output_filter
 from .ledger import Ledger, verify_file
-from .redact import redact, redact_obj, register as register_detector
-from .filters import add_input_filter, add_output_filter, FilterFinding
-from .client import wrap, install, uninstall, record, guard
+from .quota import QuotaExceeded
+from .redact import redact, redact_obj
+from .redact import register as register_detector
 
 __all__ = [
-    "NAME", "__version__",
-    "Policy", "load_policy", "PRESETS",
-    "Guard", "Blocked", "QuotaExceeded",
-    "Ledger", "verify_file",
-    "redact", "redact_obj", "register_detector",
-    "add_input_filter", "add_output_filter", "FilterFinding",
-    "wrap", "install", "uninstall", "record", "guard",
+    "NAME",
+    "PRESETS",
+    "Blocked",
+    "FilterFinding",
+    "Guard",
+    "Ledger",
+    "Policy",
+    "QuotaExceeded",
+    "__version__",
+    "add_input_filter",
+    "add_output_filter",
+    "guard",
+    "install",
+    "load_policy",
+    "record",
+    "redact",
+    "redact_obj",
+    "register_detector",
+    "uninstall",
+    "verify_file",
+    "wrap",
 ]

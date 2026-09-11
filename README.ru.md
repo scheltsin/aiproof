@@ -286,10 +286,13 @@ aiproof redact < file.txt  # попробовать маскирование
 GitHub:
 
 ```yaml
-- uses: aiproof/aiproof@v0
+- uses: scheltsin/aiproof@v0          # GitHub Marketplace: «aiproof AI security check»
   with:
-    fail-on: fail        # fail | manual | never
+    controls: ru-fstek-117,owasp-llm-2025
+    fail-on: fail                     # fail | manual | never
 ```
+
+Параметры: `path`, `controls`, `fail-on`, `version`, `report`; JSON-отчёт выкладывается артефактом `aiproof-report`.
 
 GitLab: см. [.gitlab-ci.yml](.gitlab-ci.yml) этого репозитория (lint, тесты, `aiproof attest` с артефактом `evidence.zip`).
 

@@ -9,7 +9,8 @@
 - Deterministic input/output filters (RU/EN), pluggable.
 - `attest` / `check`: model inventory, pickle detection, datasets, dependencies, LLM call sites, agent config scan, AI-BOM (CycloneDX), signed evidence bundle.
 - Control sets: FSTEC 117 (v1.0, quotes the methodological document of 12.04.2026 p. 3.18, 27 controls incl. enhancements), 152-FZ, OWASP LLM Top 10 2025, EU AI Act, ISO 42001, NIST AI RMF; several per run; `aiproof controls`.
-- Bilingual README (EN / RU).
+- Bilingual README (EN / RU); GitHub listing and Marketplace copy in docs/github-listing.md.
+- CI on Node 24 actions, Python 3.9–3.13, action smoke test; release workflow (GitHub Release + PyPI trusted publishing).
 - Integrations for closed contours: official gigachat SDK wrapper, `install(http=True)` for requests/httpx (YandexGPT Foundation Models API, GigaChat REST, Ollama, vLLM), foreign-SaaS detection in `check`.
 - License: Business Source License 1.1 (free for non-commercial, government, evaluation; commercial license for production use by for-profit organisations; Apache-2.0 after four years).
 - GitHub Action, Claude Code / Codex skill.

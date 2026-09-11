@@ -2,7 +2,7 @@
 
 **English** | [Русский](README.ru.md)
 
-[![CI](https://github.com/aiproof/aiproof/actions/workflows/ci.yml/badge.svg)](https://github.com/aiproof/aiproof/actions)
+[![CI](https://github.com/scheltsin/aiproof/actions/workflows/ci.yml/badge.svg)](https://github.com/scheltsin/aiproof/actions)
 [![PyPI](https://img.shields.io/pypi/v/aiproof)](https://pypi.org/project/aiproof/)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](pyproject.toml)
 [![License: BSL 1.1](https://img.shields.io/badge/license-BSL--1.1-blue)](LICENSE)
@@ -291,10 +291,13 @@ Control status semantics: `pass` (automated check ok), `fail`, `manual` (needs a
 GitHub:
 
 ```yaml
-- uses: aiproof/aiproof@v0
+- uses: scheltsin/aiproof@v0          # GitHub Marketplace: "aiproof AI security check"
   with:
-    fail-on: fail        # fail | manual | never
+    controls: ru-fstek-117,owasp-llm-2025
+    fail-on: fail                     # fail | manual | never
 ```
+
+Inputs: `path`, `controls`, `fail-on`, `version`, `report`; the JSON report is uploaded as the `aiproof-report` artifact.
 
 GitLab (`.gitlab-ci.yml`): see [this repository's pipeline](.gitlab-ci.yml): lint, tests, `aiproof attest` with `evidence.zip` as an artifact.
 

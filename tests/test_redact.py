@@ -1,4 +1,4 @@
-from aiproof.redact import redact, redact_obj, valid_inn, valid_snils, valid_ogrn, valid_luhn
+from aiproof.redact import redact, redact_obj, valid_inn, valid_luhn, valid_ogrn, valid_snils
 
 
 def test_inn_checksums():
@@ -92,6 +92,6 @@ def test_extended_no_false_positives():
 
 
 def test_okpo_and_iban_checksums():
-    from aiproof.redact import valid_okpo, valid_iban
+    from aiproof.redact import valid_iban, valid_okpo
     assert valid_okpo("00032537") and not valid_okpo("00032538")
     assert valid_iban("GB82 WEST 1234 5698 7654 32") and not valid_iban("GB82 WEST 1234 5698 7654 33")

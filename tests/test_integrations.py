@@ -3,8 +3,8 @@ import json
 import pytest
 
 import aiproof
-from aiproof.integrations import LLM_PATH, response_text, response_usage, wrap_positional
 from aiproof.core import Guard
+from aiproof.integrations import LLM_PATH, response_text, response_usage, wrap_positional
 
 
 def records(path):

@@ -26,15 +26,15 @@ dependencies = []
 openai = ["openai>=1.0"]
 anthropic = ["anthropic>=0.20"]
 langchain = ["langchain-core>=0.1"]
-dev = ["pytest>=7", "build", "ruff"]
+dev = ["pytest>=7", "build", "ruff>=0.16,<0.17"]
 
 [project.scripts]
 aiproof = "aiproof.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/aiproof/aiproof"
-License = "https://github.com/aiproof/aiproof/blob/main/COMMERCIAL.md"
-Spec = "https://github.com/aiproof/aiproof/tree/main/docs/spec"
+Homepage = "https://github.com/scheltsin/aiproof"
+License = "https://github.com/scheltsin/aiproof/blob/main/COMMERCIAL.md"
+Spec = "https://github.com/scheltsin/aiproof/tree/main/docs/spec"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -51,3 +51,11 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 110
 target-version = "py39"
+
+[tool.ruff.lint]
+# explicit rule set so CI does not drift with ruff's changing defaults
+select = ["E", "F", "W", "I", "RUF", "FURB", "PIE"]
+ignore = ["RUF001", "RUF002", "RUF003", "E501"]  # Cyrillic text is intended; long regex lines are fine
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["RUF059", "PLE2515", "PLE2502"]  # test fixtures deliberately contain hidden unicode
