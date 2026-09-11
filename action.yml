@@ -1,5 +1,5 @@
 name: "aiproof AI security check"
-description: "Scan a repo for LLM/AI security and compliance evidence: pickle models, unwrapped LLM calls, injected agent files, FSTEC 117, OWASP LLM Top 10"
+description: "AI security & compliance check for LLM apps (FSTEC 117, OWASP LLM, ISO 42001, EU AI Act) | Проверка безопасности ИИ-приложений: ФСТЭК 117, 152-ФЗ, OWASP LLM"
 author: "Arseniy Scheltsin"
 branding:
   icon: "shield"

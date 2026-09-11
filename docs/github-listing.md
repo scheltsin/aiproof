@@ -2,10 +2,10 @@
 
 Всё ниже можно выставить одной командой через `gh` (GitHub CLI), либо руками в Settings → General и в разделе About.
 
-## Описание репозитория (About)
+## Описание репозитория (About), двуязычное, 340 символов из 350 допустимых
 
 ```
-LLM audit log, prompt-injection detection, PII redaction (ИНН, СНИЛС, ФИО) and compliance evidence for AI apps and agents: FSTEC 117, 152-ФЗ, OWASP LLM Top 10, ISO 42001, EU AI Act. Two lines to integrate, zero dependencies.
+LLM audit log, prompt-injection detection, PII redaction and compliance evidence for AI apps: FSTEC 117, OWASP LLM, ISO 42001, EU AI Act. | Журнал запросов к LLM, детектор инъекций, маскирование ПДн (ИНН, СНИЛС, ФИО) и доказательства соответствия ФСТЭК 117, 152-ФЗ. Две строки кода, без зависимостей.
 ```
 
 Website: `https://github.com/scheltsin/aiproof#readme` (пока нет домена).
@@ -22,7 +22,7 @@ gigachat yandexgpt openai anthropic python
 
 ```bash
 gh repo edit scheltsin/aiproof \
-  --description "LLM audit log, prompt-injection detection, PII redaction (ИНН, СНИЛС, ФИО) and compliance evidence for AI apps and agents: FSTEC 117, 152-ФЗ, OWASP LLM Top 10, ISO 42001, EU AI Act. Two lines to integrate, zero dependencies." \
+  --description "LLM audit log, prompt-injection detection, PII redaction and compliance evidence for AI apps: FSTEC 117, OWASP LLM, ISO 42001, EU AI Act. | Журнал запросов к LLM, детектор инъекций, маскирование ПДн (ИНН, СНИЛС, ФИО) и доказательства соответствия ФСТЭК 117, 152-ФЗ. Две строки кода, без зависимостей." \
   --homepage "https://github.com/scheltsin/aiproof#readme" \
   --add-topic ai-security --add-topic llm-security --add-topic prompt-injection --add-topic audit-log \
   --add-topic compliance --add-topic ai-governance --add-topic pii-redaction --add-topic fstec-117 \
@@ -42,10 +42,12 @@ gh repo edit scheltsin/aiproof \
 
 **Primary category:** Security. **Secondary:** Code quality.
 
-**Listing description (короткое поле):**
+**Listing description (короткое поле, EN, затем RU):**
 
 ```
 AI security and compliance check for repositories that call LLMs: unsafe pickle models, LLM calls without an audit trail, prompt injections in agent files (AGENTS.md, CLAUDE.md, MCP), foreign SaaS models in regulated systems. Control maps for FSTEC 117 (Russia), OWASP LLM Top 10, ISO 42001, NIST AI RMF, EU AI Act. Produces a JSON report artifact.
+
+Проверка безопасности и соответствия для репозиториев, вызывающих LLM: небезопасные pickle-модели, вызовы моделей без журнала, инъекции в файлах агентов (AGENTS.md, CLAUDE.md, MCP), зарубежные SaaS-модели в регулируемых системах. Карты контролей: ФСТЭК 117, 152-ФЗ, OWASP LLM Top 10, ISO 42001, NIST AI RMF, EU AI Act. На выходе JSON-отчёт артефактом.
 ```
 
 **Пример использования (показывается на странице):**
