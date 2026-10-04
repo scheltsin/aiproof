@@ -298,5 +298,68 @@ class Guard:
         })
 
     def event(self, event: str, **payload: Any) -> None:
-        """Write an arbitrary application event (tool call, approval, deploy...)."""
+        """Write an arbitrary application event (approval, deploy...)."""
         self._safe_append(event, _to_plain(payload))
+
+    # ------------------------------------------------------------------ agent tools
+    def tool_allowed(self, name: str) -> bool:
+        import fnmatch
+        allowed = self.policy.allowed_tools
+        if allowed is None:
+            return True
+        return any(fnmatch.fnmatch(name, pat) for pat in allowed)
+
+    def tool_needs_approval(self, name: str) -> bool:
+        import fnmatch
+        return any(fnmatch.fnmatch(name, pat) for pat in (self.policy.tools_require_approval or []))
+
+    def tool_call(self, name: str, args: Any = None, result: Any = None, error: Optional[BaseException] = None,
+                  approved_by: Optional[str] = None, agent: Optional[str] = None, latency_ms: Optional[int] = None,
+                  enforce: bool = True, gate_only: bool = False, **meta: Any) -> Dict[str, Any]:
+        """Record (and, by policy, gate) one agent tool invocation.
+
+        Call it before running the tool with ``result=None`` to get the policy decision
+        (raises ``Blocked`` when the tool is not allowed or needs an approval that is
+        missing), or after the fact with ``result``/``error`` to record what happened.
+        Arguments and results go through the same redaction as prompts.
+        """
+        status = "ok"
+        decision = "allowed"
+        if enforce and self.policy.enabled:
+            if not self.tool_allowed(name):
+                status, decision = "blocked", "not_in_allowlist"
+            elif self.tool_needs_approval(name) and not approved_by:
+                status, decision = "blocked", "approval_required"
+        if error is not None:
+            status = "error"
+        findings: List[FilterFinding] = []
+        if self.policy.filter_input and args is not None:
+            findings = run_input_filters(_to_plain(args))
+        payload: Dict[str, Any] = {
+            "tool": name,
+            "status": status,
+            "decision": decision,
+            "args": self._content_view(args) if args is not None else {"sha256": hashlib.sha256(b"").hexdigest()},
+        }
+        if result is not None:
+            payload["result"] = self._content_view(result)
+        if error is not None:
+            payload["error"] = f"{type(error).__name__}: {error}"[:500]
+        if approved_by:
+            payload["approved_by"] = approved_by
+        if agent:
+            payload["agent"] = agent
+        if latency_ms is not None:
+            payload["latency_ms"] = int(latency_ms)
+        if findings:
+            payload["findings"] = {"input": [f.to_dict() for f in findings]}
+            payload["severity"] = max_severity(findings)
+        if self.policy.tags:
+            payload["tags"] = dict(self.policy.tags)
+        if meta:
+            payload["meta"] = {k: v for k, v in meta.items() if isinstance(v, (str, int, float, bool))}
+        if not (gate_only and status == "ok"):  # gate phase records only refusals; the result phase records the call
+            self._safe_append("tool.call", payload)
+        if status == "blocked":
+            raise Blocked(f"tool '{name}' blocked by policy ({decision})", findings)
+        return payload

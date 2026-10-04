@@ -5,7 +5,7 @@ Everything user-visible (env vars, default file names, CLI name) derives from
 """
 
 NAME = "aiproof"
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 
 ENV_PREFIX = NAME.upper()  # AIPROOF_*
 DEFAULT_DIR = f".{NAME}"  # ./.aiproof/

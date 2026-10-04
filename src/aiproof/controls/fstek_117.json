@@ -1,8 +1,8 @@
 {
   "id": "ru-fstek-117",
-  "title": "ФСТЭК России: Методический документ «Состав и содержание мероприятий и мер по защите информации, содержащейся в информационных системах» (утв. 12.04.2026), п. 3.18 «Обеспечение защиты информации при использовании искусственного интеллекта (ИИ)»",
-  "version": "1.0",
-  "source": "Методический документ ФСТЭК России, утверждён 12 апреля 2026 г. (информационное сообщение от 14.04.2026 № 240/22/2457), к Требованиям, утверждённым приказом ФСТЭК России от 11.04.2025 № 117 (п. 34 «т», п. 60, п. 61). Формулировки в поле ref приведены дословно по тексту п. 3.18. Дополнительные ссылки: п. 4.3 РСБ (регистрация событий безопасности), п. 4.8 ЗПИ (защита API).",
+  "title": "ФСТЭК России: приказ № 117 (ред. приказа № 137 от 08.05.2026, п. 60–61) и методический документ от 12.04.2026 п. 3.18 «Обеспечение защиты информации при использовании ИИ»",
+  "version": "1.1",
+  "source": "Приказ ФСТЭК России от 11.04.2025 № 117 «Об утверждении Требований о защите информации...» в ред. приказа от 08.05.2026 № 137 (действует с 01.09.2026): п. 34 «т», п. 60–61 (выделенный сегмент для моделей ИИ, усиленная MFA для привилегированного доступа, минимальные права, регистрация и анализ действий в сегменте, фильтрация входных/выходных данных, квотирование, ограничение функциональности). Методический документ «Состав и содержание мероприятий и мер по защите информации...» (утв. 12.04.2026), п. 3.18 (дословные цитаты в ref). Проект изменений в приказ № 117 (regulation.gov.ru № 170500, обсуждение до 15.09.2026, вступление 01.03.2027): агенты ИИ, в том числе автономные; меры подрядчика во внутренних стандартах. Контроли проекта помечены level = проект-2027. Методика оценки зрелости защиты ИС и КИИ (07.08.2026): защита при использовании ИИ как 19-е направление оценки.",
   "note": "Статусы: pass = подтверждено автоматически по артефактам; fail = автоматическая проверка не пройдена; manual = требуется документ оператора (аттестующий прикладывает его к пакету); n/a = объект отсутствует в проекте. Требования к усилению вынесены в отдельные контроли с level = усиление и применяются по решению оператора/класса защищённости.",
   "controls": [
     {
@@ -10,10 +10,22 @@
       "phase": "operation",
       "title_ru": "Регистрация событий безопасности, связанных с запросами к системе ИИ и её ответами",
       "title_en": "Log security events related to AI system requests and responses",
-      "ref": "п. 3.18, меры при эксплуатации: «обеспечение регистрации событий безопасности, связанных с запросами к системе искусственного интеллекта и ее ответами»; п. 4.3 РСБ.1, РСБ.4",
-      "checks": ["ledger.present", "ledger.verified", "ledger.covers_calls"],
-      "evidence": ["ledger/*.jsonl", "ledger-verify"],
-      "xref": {"iso42001": "A.6.2.8", "nist_ai_rmf": "MANAGE 4.1", "eu_ai_act": "Art. 12", "owasp_llm_2025": "LLM01, LLM06"}
+      "ref": "п. 3.18, меры при эксплуатации: «обеспечение регистрации событий безопасности, связанных с запросами к системе искусственного интеллекта и ее ответами»; п. 4.3 РСБ.1, РСБ.4; приказ 117 п. 60: «регистрация и анализ действий пользователей при доступе в выделенный сегмент»",
+      "checks": [
+        "ledger.present",
+        "ledger.verified",
+        "ledger.covers_calls"
+      ],
+      "evidence": [
+        "ledger/*.jsonl",
+        "ledger-verify"
+      ],
+      "xref": {
+        "iso42001": "A.6.2.8",
+        "nist_ai_rmf": "MANAGE 4.1",
+        "eu_ai_act": "Art. 12",
+        "owasp_llm_2025": "LLM01, LLM06"
+      }
     },
     {
       "id": "AI-OP-02",
@@ -21,9 +33,17 @@
       "title_ru": "Защита и целостность информации о событиях безопасности системы ИИ",
       "title_en": "Protection and integrity of AI security event records",
       "ref": "п. 4.3 РСБ.4: «должна обеспечиваться защита информации о событиях безопасности»; усиление РСБ.4 п. 5: «для обеспечения целостности информации о зарегистрированных событиях безопасности должны применяться ... криптографические методы»",
-      "checks": ["ledger.verified", "ledger.mac"],
-      "evidence": ["ledger-verify (hash chain, HMAC)"],
-      "xref": {"iso42001": "A.6.2.8", "nist_ai_rmf": "MANAGE 4.1"},
+      "checks": [
+        "ledger.verified",
+        "ledger.mac"
+      ],
+      "evidence": [
+        "ledger-verify (hash chain, HMAC)"
+      ],
+      "xref": {
+        "iso42001": "A.6.2.8",
+        "nist_ai_rmf": "MANAGE 4.1"
+      },
       "note": "HMAC-SHA256 обеспечивает контроль целостности журнала; для усиления РСБ.4 п. 5 в аттестуемых системах может требоваться ГОСТ-криптография (см. roadmap: hash_alg=streebog)."
     },
     {
@@ -31,30 +51,53 @@
       "phase": "operation",
       "title_ru": "Фильтрация (контроль) входных данных (запросов) системы ИИ",
       "title_en": "Input filtering (control) of AI system requests",
-      "ref": "п. 3.18, меры при эксплуатации: «обеспечение фильтрации (контроля) входных данных (запросов) системы искусственного интеллекта»; общий перечень мер: «контролю (фильтрации) входных и выходных данных»",
-      "checks": ["policy.filter_input"],
-      "evidence": ["policy.json", "ledger findings.input"],
-      "xref": {"nist_ai_rmf": "MEASURE 2.7", "owasp_llm_2025": "LLM01 Prompt Injection, LLM07 System Prompt Leakage"}
+      "ref": "п. 3.18, меры при эксплуатации: «обеспечение фильтрации (контроля) входных данных (запросов) системы искусственного интеллекта»; общий перечень мер: «контролю (фильтрации) входных и выходных данных»; приказ 117 п. 60: «фильтрация входных данных (запросов) и выходных данных (ответов) моделей ИИ»",
+      "checks": [
+        "policy.filter_input"
+      ],
+      "evidence": [
+        "policy.json",
+        "ledger findings.input"
+      ],
+      "xref": {
+        "nist_ai_rmf": "MEASURE 2.7",
+        "owasp_llm_2025": "LLM01 Prompt Injection, LLM07 System Prompt Leakage"
+      }
     },
     {
       "id": "AI-OP-04",
       "phase": "operation",
       "title_ru": "Фильтрация (контроль) выходных данных (ответов) системы ИИ",
       "title_en": "Output filtering (control) of AI system responses",
-      "ref": "п. 3.18, меры при эксплуатации: «обеспечение фильтрации (контроля) выходных данных (ответов) системы искусственного интеллекта»",
-      "checks": ["policy.filter_output"],
-      "evidence": ["policy.json", "ledger findings.output"],
-      "xref": {"owasp_llm_2025": "LLM02 Sensitive Information Disclosure, LLM05 Improper Output Handling"}
+      "ref": "п. 3.18, меры при эксплуатации: «обеспечение фильтрации (контроля) выходных данных (ответов) системы искусственного интеллекта»; приказ 117 п. 60 (там же)",
+      "checks": [
+        "policy.filter_output"
+      ],
+      "evidence": [
+        "policy.json",
+        "ledger findings.output"
+      ],
+      "xref": {
+        "owasp_llm_2025": "LLM02 Sensitive Information Disclosure, LLM05 Improper Output Handling"
+      }
     },
     {
       "id": "AI-OP-05",
       "phase": "operation",
       "title_ru": "Мониторинг и квотирование количества запросов к системе ИИ",
       "title_en": "Monitoring and quotas on the number of AI system requests",
-      "ref": "п. 3.18, меры при эксплуатации: «мониторинг и квотирование количества запросов к системе искусственного интеллекта»",
-      "checks": ["policy.quotas", "ledger.present"],
-      "evidence": ["policy.json (max_requests_per_minute, max_tokens_per_day)", "ledger usage"],
-      "xref": {"owasp_llm_2025": "LLM10 Unbounded Consumption"}
+      "ref": "п. 3.18, меры при эксплуатации: «мониторинг и квотирование количества запросов к системе искусственного интеллекта»; приказ 117 п. 60: «квотирование (ограничение) количества входных данных (запросов)»",
+      "checks": [
+        "policy.quotas",
+        "ledger.present"
+      ],
+      "evidence": [
+        "policy.json (max_requests_per_minute, max_tokens_per_day)",
+        "ledger usage"
+      ],
+      "xref": {
+        "owasp_llm_2025": "LLM10 Unbounded Consumption"
+      }
     },
     {
       "id": "AI-OP-06",
@@ -62,9 +105,18 @@
       "title_ru": "Защита данных системы ИИ: минимизация персональных данных в запросах и журналах",
       "title_en": "AI system data protection: PII minimisation in requests and logs",
       "ref": "п. 3.18, общий перечень мер: «защите данных системы искусственного интеллекта»; при обработке ПДн граждан РФ применяются дополнительные требования (см. AI-DEV-09, AI-DEV-10); 152-ФЗ ст. 5",
-      "checks": ["policy.redact"],
-      "evidence": ["policy.json (redact, redact_types, store_content)", "ledger request.pii"],
-      "xref": {"ru_152fz": "ст. 5, ст. 19", "eu_ai_act": "Art. 10", "owasp_llm_2025": "LLM02"}
+      "checks": [
+        "policy.redact"
+      ],
+      "evidence": [
+        "policy.json (redact, redact_types, store_content)",
+        "ledger request.pii"
+      ],
+      "xref": {
+        "ru_152fz": "ст. 5, ст. 19",
+        "eu_ai_act": "Art. 10",
+        "owasp_llm_2025": "LLM02"
+      }
     },
     {
       "id": "AI-OP-07",
@@ -72,49 +124,92 @@
       "title_ru": "Целостность параметров (весов) модели ИИ и конфигурации системы ИИ при эксплуатации",
       "title_en": "Integrity of model weights and AI system configuration in operation",
       "ref": "п. 3.18, меры при эксплуатации: «обеспечение целостности параметров (весов) модели искусственного интеллекта и конфигурации системы искусственного интеллекта»; объект защиты: «обученная и готовая к использованию модель ... ее расширения (LoRA, RAG и другие)»",
-      "checks": ["models.hashed", "policy.app_named"],
-      "evidence": ["aibom.json (hashes)", "policy.json", "manifest.json"],
-      "xref": {"iso42001": "A.6.2.4", "cyclonedx": "ML-BOM"}
+      "checks": [
+        "models.hashed",
+        "policy.app_named"
+      ],
+      "evidence": [
+        "aibom.json (hashes)",
+        "policy.json",
+        "manifest.json"
+      ],
+      "xref": {
+        "iso42001": "A.6.2.4",
+        "cyclonedx": "ML-BOM"
+      }
     },
     {
       "id": "AI-OP-08",
       "phase": "operation",
       "title_ru": "Внешний сервис ИИ: инфраструктура подрядной организации по классу не ниже класса ИС оператора",
       "title_en": "External AI service: contractor infrastructure protected to at least the operator's system class",
-      "ref": "п. 3.18: «При предоставлении подрядной организации систем искусственного интеллекта в качестве внешнего сервиса, в информационной инфраструктуре подрядной организации ... должны быть реализованы мероприятия и меры по защите информации ... по классу защищенности не ниже класса защищенности информационной системы оператора»; «В случае если для эксплуатации системы ИИ используется инфраструктура, не входящая в информационную систему оператора ...»",
-      "checks": ["llm.no_foreign_saas", "manual"],
-      "evidence": ["attest.json llm_usage providers[]", "документ: аттестат/договор с поставщиком сервиса ИИ"],
-      "xref": {"eu_ai_act": "Art. 25", "iso42001": "A.10.3"},
+      "ref": "п. 3.18: «При предоставлении подрядной организации систем искусственного интеллекта в качестве внешнего сервиса, в информационной инфраструктуре подрядной организации ... должны быть реализованы мероприятия и меры по защите информации ... по классу защищенности не ниже класса защищенности информационной системы оператора»; «В случае если для эксплуатации системы ИИ используется инфраструктура, не входящая в информационную систему оператора ...»; проект № 170500 п. 61: «осуществляемые подрядной организацией мероприятия устанавливаются во внутренних стандартах по защите информации»",
+      "checks": [
+        "llm.no_foreign_saas",
+        "manual"
+      ],
+      "evidence": [
+        "attest.json llm_usage providers[]",
+        "документ: аттестат/договор с поставщиком сервиса ИИ"
+      ],
+      "xref": {
+        "eu_ai_act": "Art. 25",
+        "iso42001": "A.10.3"
+      },
       "note": "Автоматическая часть: в коде не должно быть вызовов зарубежных SaaS-моделей (api.openai.com, Anthropic, DeepSeek, OpenRouter) без OpenAI-совместимого base_url внутри контура."
     },
     {
       "id": "AI-OP-09",
       "phase": "operation",
-      "title_ru": "Ограничение и контроль функциональности системы ИИ (агенты, инструменты)",
-      "title_en": "Restriction and control of AI system functionality (agents, tools)",
-      "ref": "п. 3.18, общий перечень мер: «ограничению и контролю функциональности системы искусственного интеллекта»; объект защиты: «агентов искусственного интеллекта, API-интерфейсов»",
-      "checks": ["ledger.present", "manual"],
-      "evidence": ["ledger event=tool.call / approval", "документ: перечень разрешённых функций и инструментов агента"],
-      "xref": {"owasp_llm_2025": "LLM06 Excessive Agency", "eu_ai_act": "Art. 14"}
+      "title_ru": "Ограничение и контроль функциональности системы ИИ: allowlist инструментов агента, подтверждение опасных действий",
+      "title_en": "Restriction and control of AI functionality: agent tool allowlist, approvals for risky actions",
+      "ref": "п. 3.18, общий перечень мер: «ограничению и контролю функциональности системы искусственного интеллекта»; объект защиты: «агентов искусственного интеллекта, API-интерфейсов»; приказ 117 п. 60: «ограничение и контроль функциональности моделей»; проект № 170500 п. 61: «При применении агентов искусственного интеллекта, в том числе автономных агентов, должны быть приняты меры, направленные на предотвращение несанкционированного воздействия»",
+      "checks": [
+        "policy.tools_allowlist",
+        "policy.tools_approval",
+        "ledger.tool_events"
+      ],
+      "evidence": [
+        "policy.json (allowed_tools, tools_require_approval)",
+        "ledger event=tool.call (decision, approved_by)",
+        "aibom.json agent-tool:*"
+      ],
+      "xref": {
+        "owasp_llm_2025": "LLM06 Excessive Agency",
+        "eu_ai_act": "Art. 14",
+        "owasp_llm_2026": "LLM03 Excessive Agency",
+        "owasp_agentic_2026": "ASI02 Tool Misuse, ASI03 Identity and Privilege Abuse"
+      }
     },
     {
       "id": "AI-OP-10",
       "phase": "operation",
       "title_ru": "Идентификация, аутентификация и управление доступом пользователей системы ИИ",
       "title_en": "Identification, authentication and access control of AI system users",
-      "ref": "п. 3.18, общий перечень мер: «идентификации и аутентификации пользователей системы искусственного интеллекта», «управлению доступом пользователей системы искусственного интеллекта»; п. 4.1 ИАФ, п. 4.2 УПД, п. 4.8 ЗПИ.2",
-      "checks": ["manual"],
-      "evidence": ["документ: схема ИАФ/УПД, роли пользователей ИИ-системы", "ledger meta.user (при передаче в record())"],
-      "xref": {"iso42001": "A.9"}
+      "ref": "п. 3.18, общий перечень мер: «идентификации и аутентификации пользователей системы искусственного интеллекта», «управлению доступом пользователей системы искусственного интеллекта»; п. 4.1 ИАФ, п. 4.2 УПД, п. 4.8 ЗПИ.2; приказ 117 п. 60: «Привилегированный доступ пользователей в выделенный сегмент должен осуществляться с использованием усиленной многофакторной аутентификации», «контроль доступа пользователей к моделям искусственного интеллекта и наделение их минимальными правами доступа»",
+      "checks": [
+        "manual"
+      ],
+      "evidence": [
+        "документ: схема ИАФ/УПД, роли пользователей ИИ-системы",
+        "ledger meta.user (при передаче в record())"
+      ],
+      "xref": {
+        "iso42001": "A.9"
+      }
     },
     {
       "id": "AI-OP-11",
       "phase": "operation",
-      "title_ru": "Изоляция системы ИИ и защита от вредоносного ПО при эксплуатации",
-      "title_en": "Isolation of the AI system and anti-malware protection in operation",
-      "ref": "п. 3.18, общий перечень мер: «обеспечению изоляции системы искусственного интеллекта», «защите от вредоносного программного обеспечения»; п. 4.13 АВЗ, п. 4.15 МСЭ",
-      "checks": ["manual"],
-      "evidence": ["документ: схема сегментации, средства АВЗ"],
+      "title_ru": "Выделенный сегмент для моделей ИИ, изоляция и защита от вредоносного ПО",
+      "title_en": "Dedicated segment for AI models, isolation and anti-malware",
+      "ref": "п. 3.18, общий перечень мер: «обеспечению изоляции системы искусственного интеллекта», «защите от вредоносного программного обеспечения»; п. 4.13 АВЗ, п. 4.15 МСЭ; приказ 117 п. 60: «выделение моделей искусственного интеллекта в отдельный сегмент информационной системы» (при обработке информации ограниченного доступа или критичных функций)",
+      "checks": [
+        "manual"
+      ],
+      "evidence": [
+        "документ: схема сегментации, средства АВЗ"
+      ],
       "xref": {}
     },
     {
@@ -123,9 +218,19 @@
       "title_ru": "Анализ уязвимостей ПО, реализующего технологию ИИ, при эксплуатации",
       "title_en": "Vulnerability analysis of AI software in operation",
       "ref": "п. 3.18: «оператор совместно с разработчиком системы искусственного интеллекта должен проводить анализ уязвимостей программного обеспечения на основании данных, получаемых из внешних источников ... и принимать меры по их устранению»; общий перечень мер: «выявлению уязвимостей в системе искусственного интеллекта»",
-      "checks": ["deps.inventoried", "deps.pinned", "manual"],
-      "evidence": ["attest.json dependencies[]", "aibom.json", "отчёт SCA (pip-audit, trivy, БДУ ФСТЭК)"],
-      "xref": {"owasp_llm_2025": "LLM03 Supply Chain"}
+      "checks": [
+        "deps.inventoried",
+        "deps.pinned",
+        "manual"
+      ],
+      "evidence": [
+        "attest.json dependencies[]",
+        "aibom.json",
+        "отчёт SCA (pip-audit, trivy, БДУ ФСТЭК)"
+      ],
+      "xref": {
+        "owasp_llm_2025": "LLM03 Supply Chain"
+      }
     },
     {
       "id": "AI-DEV-01",
@@ -133,9 +238,18 @@
       "title_ru": "Целостность выходной модели ИИ и её параметров (весов); учёт входной модели",
       "title_en": "Integrity of the output model and its weights; inventory of the input model",
       "ref": "п. 3.18, объекты защиты при разработке: «входная модель искусственного интеллекта ...», «выходная модель искусственного интеллекта и ее параметры (веса)»",
-      "checks": ["models.inventoried", "models.hashed"],
-      "evidence": ["aibom.json", "attest.json models[]"],
-      "xref": {"iso42001": "A.6.2.4", "cyclonedx": "ML-BOM"}
+      "checks": [
+        "models.inventoried",
+        "models.hashed"
+      ],
+      "evidence": [
+        "aibom.json",
+        "attest.json models[]"
+      ],
+      "xref": {
+        "iso42001": "A.6.2.4",
+        "cyclonedx": "ML-BOM"
+      }
     },
     {
       "id": "AI-DEV-02",
@@ -143,9 +257,16 @@
       "title_ru": "Отказ от небезопасных форматов обработки и хранения данных (pickle), применение безопасных форматов",
       "title_en": "No unsafe serialisation formats (pickle); safe formats only",
       "ref": "п. 3.18, инфраструктура разработки: «отказ от использования небезопасных форматов обработки и хранения данных (например, pickle) и применение безопасных форматов данных (ONNX, protobuf и другие форматы)»",
-      "checks": ["models.no_pickle"],
-      "evidence": ["attest.json findings[] models.pickle", "aibom.json format"],
-      "xref": {"owasp_llm_2025": "LLM03 Supply Chain"}
+      "checks": [
+        "models.no_pickle"
+      ],
+      "evidence": [
+        "attest.json findings[] models.pickle",
+        "aibom.json format"
+      ],
+      "xref": {
+        "owasp_llm_2025": "LLM03 Supply Chain"
+      }
     },
     {
       "id": "AI-DEV-03",
@@ -153,9 +274,17 @@
       "title_ru": "Целостность наборов обучающих данных",
       "title_en": "Integrity of training datasets",
       "ref": "п. 3.18, наборы обучающих данных: «целостность обучающих данных»",
-      "checks": ["datasets.hashed"],
-      "evidence": ["aibom.json data[] hashes", "attest.json datasets[]"],
-      "xref": {"iso42001": "A.7.4, A.7.5", "owasp_llm_2025": "LLM04 Data and Model Poisoning"}
+      "checks": [
+        "datasets.hashed"
+      ],
+      "evidence": [
+        "aibom.json data[] hashes",
+        "attest.json datasets[]"
+      ],
+      "xref": {
+        "iso42001": "A.7.4, A.7.5",
+        "owasp_llm_2025": "LLM04 Data and Model Poisoning"
+      }
     },
     {
       "id": "AI-DEV-04",
@@ -163,9 +292,15 @@
       "title_ru": "Доверенные источники, антивирусная проверка и обособленное хранилище обучающих данных",
       "title_en": "Trusted sources, malware scan and separate storage for training data",
       "ref": "п. 3.18, наборы обучающих данных: «применение в приоритетном порядке наборов обучающих данных из доверенных источников», «антивирусная проверка обучающих данных», «хранение обучающих данных в обособленном хранилище»",
-      "checks": ["manual"],
-      "evidence": ["документ: реестр источников данных, отчёт АВЗ, описание хранилища"],
-      "xref": {"iso42001": "A.7.5"}
+      "checks": [
+        "manual"
+      ],
+      "evidence": [
+        "документ: реестр источников данных, отчёт АВЗ, описание хранилища"
+      ],
+      "xref": {
+        "iso42001": "A.7.5"
+      }
     },
     {
       "id": "AI-DEV-05",
@@ -173,9 +308,19 @@
       "title_ru": "Анализ уязвимостей входной модели и ПО разработки (фреймворки, библиотеки), устранение",
       "title_en": "Vulnerability analysis of the input model and development software; remediation",
       "ref": "п. 3.18: «При использовании входной модели ... должен быть проведен анализ сведений об уязвимостях указанной модели ...»; «В отношении программного обеспечения, обеспечивающего разработку и эксплуатацию системы ИИ, должен быть проведен анализ уязвимостей ... и приняты меры по их устранению»",
-      "checks": ["deps.inventoried", "deps.pinned", "manual"],
-      "evidence": ["attest.json dependencies[]", "отчёт SCA", "документ: анализ уязвимостей входной модели"],
-      "xref": {"owasp_llm_2025": "LLM03"}
+      "checks": [
+        "deps.inventoried",
+        "deps.pinned",
+        "manual"
+      ],
+      "evidence": [
+        "attest.json dependencies[]",
+        "отчёт SCA",
+        "документ: анализ уязвимостей входной модели"
+      ],
+      "xref": {
+        "owasp_llm_2025": "LLM03"
+      }
     },
     {
       "id": "AI-DEV-06",
@@ -183,9 +328,15 @@
       "title_ru": "Изолированный сегмент инфраструктуры разработки; класс защиты не ниже ИС оператора; запрет посторонних задач",
       "title_en": "Isolated development segment; protection class not below the operator's system; no unrelated tasks",
       "ref": "п. 3.18: «выделение информационной инфраструктуры разработки системы ИИ ... в отдельный изолированный сегмент»; «меры по защите информации по классу защищенности не ниже класса защищенности информационной системы оператора»; «не допускается решение задач, не связанных с разработкой системы ИИ»",
-      "checks": ["manual"],
-      "evidence": ["документ: схема сред разработки, акт классификации"],
-      "xref": {"iso42001": "A.6.2.x"}
+      "checks": [
+        "manual"
+      ],
+      "evidence": [
+        "документ: схема сред разработки, акт классификации"
+      ],
+      "xref": {
+        "iso42001": "A.6.2.x"
+      }
     },
     {
       "id": "AI-DEV-07",
@@ -193,8 +344,14 @@
       "title_ru": "Целостность ПО, реализующего разработку системы ИИ; защита ПО агентов, API и фильтрации",
       "title_en": "Integrity of development software; protection of agent, API and filtering software",
       "ref": "п. 3.18: «целостность программного обеспечения, реализующего разработку системы искусственного интеллекта»; объекты защиты: «программное обеспечение, обеспечивающее разработку API-интерфейсов, агентов, системы фильтрации входных и выходных данных»",
-      "checks": ["deps.pinned", "manual"],
-      "evidence": ["lock-файлы", "документ: контроль целостности ПО разработки"],
+      "checks": [
+        "deps.pinned",
+        "manual"
+      ],
+      "evidence": [
+        "lock-файлы",
+        "документ: контроль целостности ПО разработки"
+      ],
       "xref": {}
     },
     {
@@ -203,9 +360,17 @@
       "title_ru": "Оценка угроз безопасности информации системы ИИ и техническое задание на меры защиты",
       "title_en": "Threat assessment for the AI system and technical specification of protection measures",
       "ref": "п. 3.18: «При создании систем ИИ оператором ... должна быть проведена оценка угроз безопасности информации ... Сведения об угрозах ... содержатся в банке данных угроз безопасности информации ФСТЭК России. По результатам оценки угроз ... должно быть разработано техническое задание»",
-      "checks": ["manual"],
-      "evidence": ["документ: модель угроз (БДУ ФСТЭК), ТЗ на систему защиты"],
-      "xref": {"eu_ai_act": "Art. 9", "iso42001": "6.1, A.5", "nist_ai_rmf": "MAP"}
+      "checks": [
+        "manual"
+      ],
+      "evidence": [
+        "документ: модель угроз (БДУ ФСТЭК), ТЗ на систему защиты"
+      ],
+      "xref": {
+        "eu_ai_act": "Art. 9",
+        "iso42001": "6.1, A.5",
+        "nist_ai_rmf": "MAP"
+      }
     },
     {
       "id": "AI-DEV-09",
@@ -213,8 +378,13 @@
       "title_ru": "Безопасная разработка ПО системы ИИ (при обработке ПДн, информации ограниченного доступа, значимых функций)",
       "title_en": "Secure software development for the AI system (when processing PD, restricted information or significant functions)",
       "ref": "п. 3.18: «обеспечить реализацию мероприятий по безопасной разработке программного обеспечения, обеспечивающего реализацию системы ИИ, предусмотренных национальными стандартами в области разработки безопасного программного обеспечения» (ГОСТ Р 56939-2024)",
-      "checks": ["deps.pinned", "manual"],
-      "evidence": ["документ: процессы РБПО по ГОСТ Р 56939-2024, отчёты SAST/SCA"],
+      "checks": [
+        "deps.pinned",
+        "manual"
+      ],
+      "evidence": [
+        "документ: процессы РБПО по ГОСТ Р 56939-2024, отчёты SAST/SCA"
+      ],
       "xref": {}
     },
     {
@@ -223,8 +393,12 @@
       "title_ru": "Сертификация ПО, реализующего систему ИИ, по требованиям безопасности информации ФСТЭК (при обработке ПДн и др.)",
       "title_en": "FSTEC certification of the AI system software (when processing PD etc.)",
       "ref": "п. 3.18: «провести сертификацию программного обеспечения, обеспечивающего реализацию системы ИИ, по требованиям безопасности информации, утвержденным ФСТЭК России»",
-      "checks": ["manual"],
-      "evidence": ["документ: сертификат соответствия ФСТЭК / план сертификации"],
+      "checks": [
+        "manual"
+      ],
+      "evidence": [
+        "документ: сертификат соответствия ФСТЭК / план сертификации"
+      ],
       "xref": {}
     },
     {
@@ -233,9 +407,19 @@
       "title_ru": "Учёт системы ИИ: назначение, модели, расширения (LoRA, RAG), ПО, ответственный",
       "title_en": "AI system inventory: purpose, models, extensions (LoRA, RAG), software, owner",
       "ref": "п. 3.18, перечни объектов защиты при разработке и эксплуатации (инфраструктура, ПО, модели, наборы данных, расширения); приказ 117 п. 34 «т»",
-      "checks": ["policy.app_named", "models.inventoried", "deps.inventoried"],
-      "evidence": ["policy.json (app, tags)", "aibom.json"],
-      "xref": {"iso42001": "A.4, A.6.2.7", "eu_ai_act": "Art. 11"}
+      "checks": [
+        "policy.app_named",
+        "models.inventoried",
+        "deps.inventoried"
+      ],
+      "evidence": [
+        "policy.json (app, tags)",
+        "aibom.json"
+      ],
+      "xref": {
+        "iso42001": "A.4, A.6.2.7",
+        "eu_ai_act": "Art. 11"
+      }
     },
     {
       "id": "AI-ENH-01",
@@ -244,9 +428,18 @@
       "title_ru": "Усиление 4: тестирование на устойчивость к промпт-атакам",
       "title_en": "Enhancement 4: prompt-attack robustness testing",
       "ref": "п. 3.18, требования к усилению, п. 4: «должно быть реализовано тестирование на устойчивость к промпт-атакам»",
-      "checks": ["policy.filter_input", "manual"],
-      "evidence": ["ledger findings.input", "отчёт red teaming / прогон бенчмарка атак"],
-      "xref": {"owasp_llm_2025": "LLM01", "nist_ai_rmf": "MEASURE 2.7"}
+      "checks": [
+        "policy.filter_input",
+        "manual"
+      ],
+      "evidence": [
+        "ledger findings.input",
+        "отчёт red teaming / прогон бенчмарка атак"
+      ],
+      "xref": {
+        "owasp_llm_2025": "LLM01",
+        "nist_ai_rmf": "MEASURE 2.7"
+      }
     },
     {
       "id": "AI-ENH-02",
@@ -255,8 +448,13 @@
       "title_ru": "Усиление 3б: ограничение допустимых диапазонов данных, санитизация входных данных",
       "title_en": "Enhancement 3b: input range limits and sanitisation",
       "ref": "п. 3.18, требования к усилению, п. 3 б): «внедрение механизмов ограничения допустимых диапазонов данных, санитизации входных данных»",
-      "checks": ["policy.filter_input", "policy.quotas"],
-      "evidence": ["policy.json (max_prompt_chars, filter_input, redact)"],
+      "checks": [
+        "policy.filter_input",
+        "policy.quotas"
+      ],
+      "evidence": [
+        "policy.json (max_prompt_chars, filter_input, redact)"
+      ],
       "xref": {}
     },
     {
@@ -266,8 +464,14 @@
       "title_ru": "Усиление 6: целостность модели ИИ с использованием криптографических средств",
       "title_en": "Enhancement 6: cryptographic model integrity",
       "ref": "п. 3.18, требования к усилению, п. 6: «должна быть обеспечена целостность модели искусственного интеллекта с использованием шифровальных (криптографических) средств защиты информации»",
-      "checks": ["models.hashed", "manual"],
-      "evidence": ["aibom.json hashes", "документ: подпись весов сертифицированным СКЗИ"],
+      "checks": [
+        "models.hashed",
+        "manual"
+      ],
+      "evidence": [
+        "aibom.json hashes",
+        "документ: подпись весов сертифицированным СКЗИ"
+      ],
       "xref": {}
     },
     {
@@ -277,9 +481,56 @@
       "title_ru": "Усиления 1, 2, 3а, 5: физическая изоляция разработки, шифрование датасетов, состязательное обучение, выделенный сегмент ИИ",
       "title_en": "Enhancements 1, 2, 3a, 5: physically isolated development, encrypted datasets, adversarial training, dedicated AI segment",
       "ref": "п. 3.18, требования к усилению, пп. 1, 2, 3 а), 5",
-      "checks": ["manual"],
-      "evidence": ["документы оператора по каждому усилению"],
+      "checks": [
+        "manual"
+      ],
+      "evidence": [
+        "документы оператора по каждому усилению"
+      ],
       "xref": {}
+    },
+    {
+      "id": "AI-AGT-01",
+      "phase": "operation",
+      "level": "проект-2027",
+      "title_ru": "Агенты ИИ (включая автономные): предотвращение несанкционированного воздействия на ресурсы ИС, учёт инструментов и MCP-серверов",
+      "title_en": "AI agents (incl. autonomous): prevent unauthorised impact on system resources; inventory tools and MCP servers",
+      "ref": "Проект изменений в приказ 117 (№ 170500, с 01.03.2027) п. 61: «При применении агентов искусственного интеллекта, в том числе автономных агентов, должны быть приняты меры, направленные на предотвращение несанкционированного воздействия»; ACS (OWASP, 09.2026): Agent Bill of Materials",
+      "checks": [
+        "policy.tools_allowlist",
+        "mcp.inventoried",
+        "mcp.no_remote",
+        "ledger.tool_events"
+      ],
+      "evidence": [
+        "aibom.json (agent-tool:*, mcp-server:*)",
+        "policy.json",
+        "ledger event=tool.call"
+      ],
+      "xref": {
+        "owasp_agentic_2026": "ASI01, ASI02, ASI04, ASI10",
+        "owasp_llm_2026": "LLM03"
+      }
+    },
+    {
+      "id": "AI-AGT-02",
+      "phase": "operation",
+      "level": "проект-2027",
+      "title_ru": "Права доступа агентов: минимальные права, отдельные учётные данные, подтверждение человеком опасных действий",
+      "title_en": "Agent access rights: least privilege, separate credentials, human approval for risky actions",
+      "ref": "Проект № 170500 п. 61 (управление правами доступа агентов); приказ 117 п. 60 (минимальные права); EU AI Act Art. 14",
+      "checks": [
+        "policy.tools_approval",
+        "manual"
+      ],
+      "evidence": [
+        "policy.json tools_require_approval",
+        "ledger approved_by",
+        "документ: матрица прав агентов и сервисных учётных записей"
+      ],
+      "xref": {
+        "owasp_agentic_2026": "ASI03 Identity and Privilege Abuse, ASI09 Human-Agent Trust Exploitation"
+      }
     }
   ]
 }

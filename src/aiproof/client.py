@@ -14,6 +14,7 @@ from __future__ import annotations
 import contextlib
 import functools
 import inspect
+import time
 from typing import Any, Callable, Dict, Iterable, Optional
 
 from .core import Blocked, Call, Guard
@@ -390,3 +391,62 @@ def record(op: str, model: str = "", input: Any = None, provider: str = "custom"
         raise
     out = rec.output
     g.after(call, out, usage=rec.usage, output_text=out if isinstance(out, str) else None)
+
+
+# ------------------------------------------------------------------ agent tools
+
+def record_tool(name: str, args: Any = None, result: Any = None, policy: Any = None, **kw: Any) -> Dict[str, Any]:
+    """Record one tool invocation after the fact (``result`` or ``error``), or gate it before
+    running (``result=None``): raises ``Blocked`` when the policy forbids the tool.
+
+    >>> aiproof.record_tool("crm.update", {"inn": "7707083893"}, approved_by="user:42")
+    """
+    g = guard(policy) if policy is not None else guard()
+    return g.tool_call(name, args, result, **kw)
+
+
+def tool(name: Optional[str] = None, agent: Optional[str] = None, policy: Any = None,
+         approved_by: Optional[str] = None):
+    """Decorator for agent tool functions: policy gate before, record after (sync or async).
+
+    >>> @aiproof.tool("crm.update", agent="sales-agent")
+    ... def update_crm(inn: str, status: str): ...
+    """
+    def deco(fn: Callable) -> Callable:
+        tname = name or fn.__name__
+        g = guard(policy) if policy is not None else guard()
+
+        def _args(args, kwargs):
+            return {"args": list(args), "kwargs": dict(kwargs)} if args else dict(kwargs)
+
+        if inspect.iscoroutinefunction(fn):
+            @functools.wraps(fn)
+            async def awrapper(*args, **kwargs):
+                g.tool_call(tname, _args(args, kwargs), approved_by=approved_by, agent=agent, gate_only=True)
+                t0 = time.time()
+                try:
+                    res = await fn(*args, **kwargs)
+                except BaseException as e:
+                    g.tool_call(tname, _args(args, kwargs), error=e, agent=agent, enforce=False,
+                                latency_ms=int((time.time() - t0) * 1000))
+                    raise
+                g.tool_call(tname, _args(args, kwargs), result=res, agent=agent, enforce=False,
+                            approved_by=approved_by, latency_ms=int((time.time() - t0) * 1000))
+                return res
+            return awrapper
+
+        @functools.wraps(fn)
+        def wrapper(*args, **kwargs):
+            g.tool_call(tname, _args(args, kwargs), approved_by=approved_by, agent=agent, gate_only=True)
+            t0 = time.time()
+            try:
+                res = fn(*args, **kwargs)
+            except BaseException as e:
+                g.tool_call(tname, _args(args, kwargs), error=e, agent=agent, enforce=False,
+                            latency_ms=int((time.time() - t0) * 1000))
+                raise
+            g.tool_call(tname, _args(args, kwargs), result=res, agent=agent, enforce=False,
+                        approved_by=approved_by, latency_ms=int((time.time() - t0) * 1000))
+            return res
+        return wrapper
+    return deco

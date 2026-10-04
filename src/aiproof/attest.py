@@ -110,6 +110,27 @@ def _walk(root: Path):
             yield Path(dirpath) / fn
 
 
+def _mcp_servers(txt: str) -> List[Dict[str, Any]]:
+    """Extract MCP server definitions (.mcp.json, claude_desktop_config.json, mcp.json) for the AgBOM."""
+    out: List[Dict[str, Any]] = []
+    try:
+        data = json.loads(txt)
+    except Exception:
+        return out
+    servers = data.get("mcpServers") or data.get("servers") or {}
+    if not isinstance(servers, dict):
+        return out
+    for name, cfg in servers.items():
+        if not isinstance(cfg, dict):
+            continue
+        url = cfg.get("url") or cfg.get("endpoint")
+        cmd = cfg.get("command")
+        args = cfg.get("args") or []
+        out.append({"name": name, "command": (" ".join([str(cmd)] + [str(a) for a in args])).strip() if cmd else None,
+                    "url": url, "remote": bool(url), "env_keys": sorted((cfg.get("env") or {}).keys())})
+    return out
+
+
 def _parse_requirements(text: str) -> List[Dict[str, Any]]:
     out = []
     for line in text.splitlines():
@@ -192,8 +213,16 @@ def scan_project(root: str = ".", hash_datasets: bool = True, max_dataset_mb: in
             if name in AGENT_FILES or (ext == ".md" and name.upper() in {"AGENTS.MD", "CLAUDE.MD"}):
                 txt = p.read_text("utf-8", "replace")
                 fnd = scan_text(txt)
-                agent_files.append({"path": r, "sha256": sha256_hex(txt.encode("utf-8")),
-                                    "findings": [f.to_dict() for f in fnd]})
+                entry_af: Dict[str, Any] = {"path": r, "sha256": sha256_hex(txt.encode("utf-8")),
+                                            "findings": [f.to_dict() for f in fnd]}
+                if ext == ".json":
+                    entry_af["mcp_servers"] = _mcp_servers(txt)
+                    for srv in entry_af["mcp_servers"]:
+                        if srv.get("remote"):
+                            findings.append({"id": "mcp.remote_server", "severity": "medium", "path": r,
+                                             "msg": f"remote MCP server '{srv['name']}' ({srv.get('url')}): "
+                                                    "verify its operator and class before use in an attested system"})
+                agent_files.append(entry_af)
                 for f in fnd:
                     if f.severity in ("high", "critical"):
                         findings.append({"id": "agentcfg." + f.rule, "severity": f.severity, "path": r, "msg": f.snippet})
@@ -205,7 +234,12 @@ def scan_project(root: str = ".", hash_datasets: bool = True, max_dataset_mb: in
                     key = os.environ.get(f"{NAME.upper()}_KEY")
                     vr = verify_file(str(p), key.encode() if key else None)
                     has_mac = '"mac":' in first
-                    ledgers.append({"path": r, **vr.to_dict(), "has_mac": has_mac})
+                    tool_events = 0
+                    with open(p, "r", encoding="utf-8", errors="replace") as f:
+                        for line in f:
+                            if '"event":"tool.call"' in line.replace(" ", ""):
+                                tool_events += 1
+                    ledgers.append({"path": r, **vr.to_dict(), "has_mac": has_mac, "tool_events": tool_events})
                     if not vr.ok:
                         findings.append({"id": "ledger.broken", "severity": "critical", "path": r,
                                          "msg": "; ".join(vr.errors[:3])})
@@ -315,6 +349,30 @@ def evaluate_checks(scan: Dict[str, Any]) -> Dict[str, Tuple[str, str]]:
             ("pass", "no foreign SaaS endpoints detected")
     else:
         c["llm.no_foreign_saas"] = ("n/a", "no LLM client code detected")
+    allowed = pol.get("allowed_tools")
+    n_tools = sum(ld.get("tool_events", 0) for ld in ledgers)
+    agent_frameworks = {"langchain", "llama_index", "mcp"} & {p for u in scan["llm_usage"] for p in u["providers"]}
+    agent_signals = n_tools > 0 or bool(agent_frameworks) or \
+        any(af.get("mcp_servers") for af in scan["agent_files"]) or bool(pol.get("tools_require_approval"))
+    if isinstance(allowed, list):
+        c["policy.tools_allowlist"] = ("pass", f"{len(allowed)} pattern(s)")
+    elif agent_signals:
+        c["policy.tools_allowlist"] = ("fail", "agent tools detected but allowed_tools not set (any tool may run)")
+    else:
+        c["policy.tools_allowlist"] = ("n/a", "no agent tools detected")
+    if pol.get("tools_require_approval"):
+        c["policy.tools_approval"] = ("pass", ", ".join(pol["tools_require_approval"]))
+    elif agent_signals:
+        c["policy.tools_approval"] = ("manual", "no tools_require_approval; attach the approval procedure")
+    else:
+        c["policy.tools_approval"] = ("n/a", "no agent tools detected")
+    c["ledger.tool_events"] = ("pass", f"{n_tools} tool.call records") if n_tools else \
+        ("n/a", "no tool.call records (no agent tools, or not wired through aiproof.tool / wrap_mcp / langchain_handler)")
+    mcp_remote = any(srv.get("remote") for af in scan["agent_files"] for srv in af.get("mcp_servers", []))
+    mcp_any = any(af.get("mcp_servers") for af in scan["agent_files"])
+    c["mcp.inventoried"] = ("pass", "MCP servers listed in AgBOM") if mcp_any else ("n/a", "no MCP configs")
+    c["mcp.no_remote"] = ("fail", "remote MCP servers in config") if mcp_remote else \
+        (("pass", "local MCP servers only") if mcp_any else ("n/a", "no MCP configs"))
     c["policy.filter_input"] = ("pass", "enabled") if pol.get("filter_input") else ("fail", "filter_input=false")
     c["policy.filter_output"] = ("pass", "enabled") if pol.get("filter_output") else ("fail", "filter_output=false")
     c["policy.redact"] = ("pass", ",".join(pol.get("redact_types", []))) if pol.get("redact") else ("fail", "redact=false")
@@ -390,6 +448,31 @@ def build_aibom(scan: Dict[str, Any]) -> Dict[str, Any]:
         if dep["name"] in AI_DEPS:
             comps.append({"type": "library", "name": dep["name"], "version": dep.get("version") or "unpinned",
                           "properties": [{"name": "file", "value": dep["file"]}]})
+    for af in scan["agent_files"]:
+        for srv in af.get("mcp_servers", []):
+            comps.append({"type": "service", "name": f"mcp-server:{srv['name']}",
+                          "properties": [{"name": "config", "value": af["path"]},
+                                         {"name": "command", "value": srv.get("command") or ""},
+                                         {"name": "url", "value": srv.get("url") or ""},
+                                         {"name": "remote", "value": str(bool(srv.get("remote"))).lower()},
+                                         {"name": "env_keys", "value": ",".join(srv.get("env_keys", []))}]})
+    tools_seen: Dict[str, int] = {}
+    for ld in scan["ledgers"]:
+        try:
+            with open(Path(scan["root"]) / ld["path"], "r", encoding="utf-8", errors="replace") as f:
+                for line in f:
+                    if '"event":"tool.call"' not in line.replace(" ", ""):
+                        continue
+                    try:
+                        t = json.loads(line).get("tool")
+                    except Exception:
+                        continue
+                    if t:
+                        tools_seen[t] = tools_seen.get(t, 0) + 1
+        except Exception:
+            continue
+    for t, n in sorted(tools_seen.items()):
+        comps.append({"type": "service", "name": f"agent-tool:{t}", "properties": [{"name": "calls", "value": str(n)}]})
     for u in scan["llm_usage"]:
         for prov in u["providers"]:
             comps.append({"type": "service", "name": f"llm-provider:{prov}",

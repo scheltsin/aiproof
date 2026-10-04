@@ -17,7 +17,8 @@ Anything else::
 """
 from ._meta import NAME
 from ._meta import VERSION as __version__
-from .client import guard, install, record, uninstall, wrap
+from .agents import langchain_handler, wrap_mcp
+from .client import guard, install, record, record_tool, tool, uninstall, wrap
 from .config import PRESETS, Policy, load_policy
 from .core import Blocked, Guard
 from .filters import FilterFinding, add_input_filter, add_output_filter
@@ -40,12 +41,16 @@ __all__ = [
     "add_output_filter",
     "guard",
     "install",
+    "langchain_handler",
     "load_policy",
     "record",
+    "record_tool",
     "redact",
     "redact_obj",
     "register_detector",
+    "tool",
     "uninstall",
     "verify_file",
     "wrap",
+    "wrap_mcp",
 ]

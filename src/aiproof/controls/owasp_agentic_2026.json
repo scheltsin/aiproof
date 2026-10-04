@@ -1,0 +1,170 @@
+{
+  "id": "owasp-agentic-2026",
+  "title": "OWASP Top 10 for Agentic Applications 2026 (published 10.12.2025)",
+  "version": "1.0",
+  "source": "https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/ ; Agent Control Standard (OWASP, 09.2026): auditable, traceable, instrumentable agents; AgBOM; OTel/OCSF events",
+  "controls": [
+    {
+      "id": "ASI01",
+      "phase": "operation",
+      "title_ru": "Перехват цели агента – инъекции в документах, письмах, страницах",
+      "title_en": "Agent Goal Hijack",
+      "checks": [
+        "policy.filter_input",
+        "ledger.tool_events"
+      ],
+      "evidence": [
+        "ledger findings.input (inj.*, hidden.*)"
+      ],
+      "xref": {
+        "owasp_llm_2026": "LLM01"
+      }
+    },
+    {
+      "id": "ASI02",
+      "phase": "operation",
+      "title_ru": "Злоупотребление инструментами – allowlist, подтверждения, журнал вызовов с аргументами",
+      "title_en": "Tool Misuse and Exploitation",
+      "checks": [
+        "policy.tools_allowlist",
+        "policy.tools_approval",
+        "ledger.tool_events"
+      ],
+      "evidence": [
+        "policy.json",
+        "ledger event=tool.call"
+      ],
+      "xref": {
+        "ru_fstek_117": "AI-OP-09"
+      }
+    },
+    {
+      "id": "ASI03",
+      "phase": "operation",
+      "title_ru": "Злоупотребление идентичностью и привилегиями – отдельные учётные данные агентов, минимальные права",
+      "title_en": "Identity and Privilege Abuse",
+      "checks": [
+        "policy.tools_approval",
+        "manual"
+      ],
+      "evidence": [
+        "документ: матрица прав агентов",
+        "ledger approved_by"
+      ],
+      "xref": {
+        "ru_fstek_117": "AI-AGT-02"
+      }
+    },
+    {
+      "id": "ASI04",
+      "phase": "development",
+      "title_ru": "Цепочка поставки агентов – инвентаризация инструментов, плагинов, MCP-серверов (AgBOM)",
+      "title_en": "Agentic Supply Chain Vulnerabilities",
+      "checks": [
+        "mcp.inventoried",
+        "mcp.no_remote",
+        "deps.pinned"
+      ],
+      "evidence": [
+        "aibom.json mcp-server:*, agent-tool:*"
+      ],
+      "xref": {
+        "owasp_llm_2026": "LLM04"
+      }
+    },
+    {
+      "id": "ASI05",
+      "phase": "operation",
+      "title_ru": "Неожиданное выполнение кода – песочница, allowlist shell/exec-инструментов",
+      "title_en": "Unexpected Code Execution",
+      "checks": [
+        "policy.tools_allowlist",
+        "manual"
+      ],
+      "evidence": [
+        "policy.json",
+        "документ: песочница исполнения"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "ASI06",
+      "phase": "development",
+      "title_ru": "Отравление памяти и контекста – целостность RAG и памяти агента",
+      "title_en": "Memory and Context Poisoning",
+      "checks": [
+        "datasets.hashed",
+        "manual"
+      ],
+      "evidence": [
+        "aibom.json data[]",
+        "документ: контроль источников RAG"
+      ],
+      "xref": {
+        "owasp_llm_2026": "LLM05, LLM09"
+      }
+    },
+    {
+      "id": "ASI07",
+      "phase": "operation",
+      "title_ru": "Небезопасное взаимодействие агентов – аутентификация и валидация сообщений между агентами",
+      "title_en": "Insecure Inter-Agent Communication",
+      "checks": [
+        "manual"
+      ],
+      "evidence": [
+        "документ: схема обмена между агентами"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "ASI08",
+      "phase": "operation",
+      "title_ru": "Каскадные сбои – квоты, kill switch, журнал для разбора",
+      "title_en": "Cascading Failures",
+      "checks": [
+        "policy.quotas",
+        "ledger.present"
+      ],
+      "evidence": [
+        "policy.json",
+        "ledger"
+      ],
+      "xref": {
+        "owasp_llm_2026": "LLM06"
+      }
+    },
+    {
+      "id": "ASI09",
+      "phase": "operation",
+      "title_ru": "Эксплуатация доверия человека к агенту – подтверждение значимых действий человеком",
+      "title_en": "Human-Agent Trust Exploitation",
+      "checks": [
+        "policy.tools_approval"
+      ],
+      "evidence": [
+        "policy.json tools_require_approval",
+        "ledger approved_by"
+      ],
+      "xref": {
+        "eu_ai_act": "Art. 14"
+      }
+    },
+    {
+      "id": "ASI10",
+      "phase": "operation",
+      "title_ru": "Агенты-злоумышленники – неизменяемый журнал действий, allowlist, мониторинг",
+      "title_en": "Rogue Agents",
+      "checks": [
+        "ledger.verified",
+        "ledger.tool_events",
+        "policy.tools_allowlist"
+      ],
+      "evidence": [
+        "ledger (hash chain, HMAC)",
+        "policy.json"
+      ],
+      "xref": {}
+    }
+  ]
+}

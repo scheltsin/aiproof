@@ -1,0 +1,167 @@
+{
+  "id": "owasp-llm-2026",
+  "title": "OWASP Top 10 for LLM Applications 2026 (published 03.08.2026)",
+  "version": "1.0",
+  "source": "https://genai.owasp.org/llm-top-10/ – 2026 edition: Excessive Agency moved to #3, Hidden Context Exposure replaced System Prompt Leakage, Misinformation moved up; hybrid ranking (practitioners + 6 639 real incidents)",
+  "controls": [
+    {
+      "id": "LLM01",
+      "phase": "operation",
+      "title_ru": "Prompt Injection – фильтрация и журналирование инъекций",
+      "title_en": "Prompt Injection",
+      "checks": [
+        "policy.filter_input",
+        "ledger.present"
+      ],
+      "evidence": [
+        "policy.json",
+        "ledger findings.input"
+      ],
+      "xref": {
+        "ru_fstek_117": "AI-OP-03"
+      }
+    },
+    {
+      "id": "LLM02",
+      "phase": "operation",
+      "title_ru": "Раскрытие чувствительной информации – маскирование ПДн и секретов, фильтр ответов",
+      "title_en": "Sensitive Information Disclosure",
+      "checks": [
+        "policy.redact",
+        "policy.filter_output"
+      ],
+      "evidence": [
+        "ledger request.pii, findings.output"
+      ],
+      "xref": {
+        "ru_fstek_117": "AI-OP-04, AI-OP-06"
+      }
+    },
+    {
+      "id": "LLM03",
+      "phase": "operation",
+      "title_ru": "Избыточные полномочия агента – allowlist инструментов, подтверждения, журнал вызовов",
+      "title_en": "Excessive Agency",
+      "checks": [
+        "policy.tools_allowlist",
+        "policy.tools_approval",
+        "ledger.tool_events"
+      ],
+      "evidence": [
+        "policy.json allowed_tools",
+        "ledger event=tool.call"
+      ],
+      "xref": {
+        "ru_fstek_117": "AI-OP-09, AI-AGT-01"
+      }
+    },
+    {
+      "id": "LLM04",
+      "phase": "development",
+      "title_ru": "Цепочка поставки – инвентаризация моделей, зависимостей и MCP-серверов, запрет pickle",
+      "title_en": "Supply Chain",
+      "checks": [
+        "models.hashed",
+        "models.no_pickle",
+        "deps.pinned",
+        "mcp.no_remote"
+      ],
+      "evidence": [
+        "aibom.json",
+        "attest.json"
+      ],
+      "xref": {
+        "ru_fstek_117": "AI-DEV-01, AI-DEV-02, AI-DEV-05"
+      }
+    },
+    {
+      "id": "LLM05",
+      "phase": "development",
+      "title_ru": "Отравление данных и модели – целостность датасетов и весов",
+      "title_en": "Data and Model Poisoning",
+      "checks": [
+        "datasets.hashed",
+        "models.hashed",
+        "manual"
+      ],
+      "evidence": [
+        "aibom.json",
+        "документ: происхождение данных"
+      ],
+      "xref": {
+        "ru_fstek_117": "AI-DEV-03"
+      }
+    },
+    {
+      "id": "LLM06",
+      "phase": "operation",
+      "title_ru": "Неограниченное потребление – квоты",
+      "title_en": "Unbounded Consumption",
+      "checks": [
+        "policy.quotas"
+      ],
+      "evidence": [
+        "policy.json"
+      ],
+      "xref": {
+        "ru_fstek_117": "AI-OP-05"
+      }
+    },
+    {
+      "id": "LLM07",
+      "phase": "operation",
+      "title_ru": "Недостоверная информация – контроль качества ответов",
+      "title_en": "Misinformation",
+      "checks": [
+        "manual"
+      ],
+      "evidence": [
+        "документ: процедура проверки ответов, тесты"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "LLM08",
+      "phase": "operation",
+      "title_ru": "Раскрытие скрытого контекста – системный промпт, RAG-контекст, инструкции агентов",
+      "title_en": "Hidden Context Exposure",
+      "checks": [
+        "policy.filter_input",
+        "policy.filter_output"
+      ],
+      "evidence": [
+        "ledger findings inj.sysprompt.*, leak.*",
+        "attest.json agent_files"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "LLM09",
+      "phase": "development",
+      "title_ru": "Уязвимости векторов и эмбеддингов – ACL на RAG, журнал retrieve",
+      "title_en": "Vector and Embedding Weaknesses",
+      "checks": [
+        "manual"
+      ],
+      "evidence": [
+        "документ: разграничение доступа к индексам"
+      ],
+      "xref": {}
+    },
+    {
+      "id": "LLM10",
+      "phase": "operation",
+      "title_ru": "Небезопасная обработка вывода – фильтр ответов, санитизация перед исполнением",
+      "title_en": "Improper Output Handling",
+      "checks": [
+        "policy.filter_output",
+        "manual"
+      ],
+      "evidence": [
+        "policy.json",
+        "документ: санитизация вывода"
+      ],
+      "xref": {}
+    }
+  ]
+}

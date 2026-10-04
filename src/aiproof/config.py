@@ -58,6 +58,12 @@ class Policy:
     max_tokens_per_day: int = 0
     max_prompt_chars: int = 0
 
+    # agent tools (OWASP LLM03/ASI02 Excessive Agency; FSTEC 117 п. 60-61 "ограничение и контроль функциональности")
+    # None = any tool allowed; [] = no tools; ["crm.read", "search"] = allowlist (fnmatch patterns ok)
+    allowed_tools: Optional[List[str]] = None
+    # tools that need a human approval marker (approved_by=...) before they run
+    tools_require_approval: List[str] = field(default_factory=list)
+
     # behaviour
     fail_closed: bool = False  # True: any internal error stops the LLM call
     enabled: bool = True
@@ -113,7 +119,7 @@ def _coerce(key: str, value: str) -> Any:
             return int(value)
         except ValueError:
             return 0
-    if key == "redact_types":
+    if key in ("redact_types", "allowed_tools", "tools_require_approval"):
         return [v.strip() for v in value.split(",") if v.strip()]
     if key == "tags":
         try:

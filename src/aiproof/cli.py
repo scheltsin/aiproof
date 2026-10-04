@@ -1,4 +1,4 @@
-"""Command line: init | verify | attest | check | proxy | redact | policy | version"""
+"""Command line: init | verify | attest | check | controls | export | proxy | redact | policy | version"""
 from __future__ import annotations
 
 import argparse
@@ -130,6 +130,10 @@ def cmd_attest(a: argparse.Namespace, check_only: bool = False) -> int:
         Path(a.json).write_text(json.dumps({"scan": scan, "controls": ev, "control_sets": evs},
                                            ensure_ascii=False, indent=2), "utf-8")
         print(f"json report:     {a.json}")
+    if a.sarif:
+        from .export import to_sarif
+        Path(a.sarif).write_text(json.dumps(to_sarif(scan, evs), ensure_ascii=False, indent=2), "utf-8")
+        print(f"sarif report:    {a.sarif}")
 
     fail_on = a.fail_on
     bad = any(e["summary"]["fail"] > 0 or (fail_on == "manual" and e["summary"]["manual"] > 0) for e in evs)
@@ -141,6 +145,25 @@ def cmd_attest(a: argparse.Namespace, check_only: bool = False) -> int:
 
 def cmd_check(a: argparse.Namespace) -> int:
     return cmd_attest(a, check_only=True)
+
+
+def cmd_export(a: argparse.Namespace) -> int:
+    from .export import export_ledger
+    from .ledger import ledger_files
+    paths: List[str] = []
+    for p in a.paths or [DEFAULT_DIR]:
+        paths.extend(ledger_files(p) if os.path.isdir(p) else [p])
+    out = open(a.out, "w", encoding="utf-8") if a.out else sys.stdout
+    n = 0
+    try:
+        for line in export_ledger(paths, a.format):
+            out.write(line + "\n")
+            n += 1
+    finally:
+        if a.out:
+            out.close()
+            print(f"exported {n} records as {a.format} -> {a.out}")
+    return 0
 
 
 def cmd_proxy(a: argparse.Namespace) -> int:
@@ -198,6 +221,7 @@ def build_parser() -> argparse.ArgumentParser:
                        help="comma-separated control set ids or json paths (see `%s controls`)" % NAME)
         s.add_argument("--out", default=None, help="evidence bundle path (.zip)")
         s.add_argument("--json", default=None, help="write full json report to this file")
+        s.add_argument("--sarif", default=None, help="write findings + failed controls as SARIF 2.1.0 (code scanning)")
         s.add_argument("--fail-on", default="fail", choices=["fail", "manual", "never"])
         s.add_argument("--no-ledgers", action="store_true", help="do not include ledgers in the bundle")
         s.add_argument("--no-hash-datasets", action="store_true")
@@ -205,6 +229,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("controls", help="list built-in control sets (FSTEC 117, OWASP LLM, EU AI Act, ISO 42001, ...)")
     s.set_defaults(fn=cmd_controls)
+
+    s = sub.add_parser("export", help="export ledger records for SIEM / observability: otel | ocsf | cef")
+    s.add_argument("paths", nargs="*", help="ledger files or directories (default: .aiproof/)")
+    s.add_argument("--format", "-f", default="cef", choices=["otel", "ocsf", "cef"])
+    s.add_argument("--out", "-o", default=None, help="output file (default: stdout)")
+    s.set_defaults(fn=cmd_export)
 
     s = sub.add_parser("proxy", help="local reverse proxy for OpenAI-compatible APIs (zero code changes)")
     s.add_argument("--upstream", required=True, help="e.g. https://api.openai.com or https://gigachat.devices.sberbank.ru/api")
@@ -233,6 +263,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         return int(a.fn(a) or 0)
     except KeyboardInterrupt:
         return 130
+    except BrokenPipeError:  # e.g. `aiproof export | head`
+        return 0
 
 
 if __name__ == "__main__":

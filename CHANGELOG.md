@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.2.0 (2026-10-04)
+
+Regulatory and standards update:
+
+- FSTEC 117 control map v1.1: references to order 117 as amended by order 137 of 08.05.2026 (p. 60–61: dedicated AI segment, strengthened MFA, least privilege, filtering, quotas, functionality control), the draft amendment #170500 (AI agents incl. autonomous, in force 01.03.2027) as `проект-2027` controls AI-AGT-01/02, and the maturity assessment methodology of 07.08.2026.
+- New control sets: `owasp-llm-2026` (new 2026 numbering: Excessive Agency #3, Hidden Context Exposure), `owasp-agentic-2026` (ASI01–ASI10), `ru-243fz` (federal AI law 243-ФЗ of 26.07.2026).
+
+Agents:
+
+- Tool policy: `allowed_tools` (fnmatch allowlist) and `tools_require_approval` in the policy; `aiproof.record_tool()`, `@aiproof.tool()` decorator (sync/async) with gate-before / record-after; `tool.call` ledger events with redacted arguments, decision and `approved_by`.
+- `aiproof.langchain_handler()` callback for LangChain / LangGraph (LLM calls + tools), `aiproof.wrap_mcp()` for FastMCP servers.
+- AgBOM: MCP servers from `.mcp.json` / `claude_desktop_config.json` / `mcp.json` and agent tools seen in ledgers become CycloneDX components; `mcp.remote_server` finding; new checks `policy.tools_allowlist`, `policy.tools_approval`, `ledger.tool_events`, `mcp.inventoried`, `mcp.no_remote`.
+
+Exports:
+
+- `aiproof export --format otel|ocsf|cef`: OpenTelemetry GenAI attributes, OCSF API Activity (6003), CEF for KUMA / MaxPatrol SIEM / Splunk.
+- `aiproof check --sarif report.sarif` for GitHub code scanning / GitLab SAST.
+
+CI: Python 3.14 in the matrix.
+
+
 ## 0.1.0 (unreleased)
 
 - Hash-chained JSONL ledger with optional HMAC; rotation at `rotate_mb` with chain continuity across segments; multi-process safe appends (advisory lock); `aiproof verify` for files, directories and bundles.

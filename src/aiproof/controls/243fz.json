@@ -1,0 +1,111 @@
+{
+  "id": "ru-243fz",
+  "title": "Федеральный закон от 26.07.2026 № 243-ФЗ «О поддержке развития технологий искусственного интеллекта в Российской Федерации»",
+  "version": "0.1",
+  "source": "Действует с 01.09.2026, отдельные положения (меры безопасности и техническая документация для разработчиков суверенных/национальных моделей, возможность предупреждения об ИИ-контенте) с 01.03.2027. Подзаконные акты (порядок учёта больших фундаментальных моделей, требования к предотвращению рисков) ожидаются; карта обновится по их выходу. Юридическая квалификация – за юристом.",
+  "controls": [
+    {
+      "id": "FZ-01",
+      "phase": "governance",
+      "title_ru": "Инвентаризация используемых моделей ИИ и сервисов (учёт больших фундаментальных моделей)",
+      "title_en": "Inventory of AI models and services in use",
+      "checks": [
+        "models.inventoried",
+        "deps.inventoried",
+        "policy.app_named"
+      ],
+      "evidence": [
+        "aibom.json",
+        "attest.json llm_usage"
+      ],
+      "xref": {
+        "ru_fstek_117": "AI-GOV-01"
+      }
+    },
+    {
+      "id": "FZ-02",
+      "phase": "governance",
+      "title_ru": "Техническая документация параметров и ограничений модели (для разработчиков моделей, с 01.03.2027)",
+      "title_en": "Technical documentation of model parameters and limitations (model developers, from 01.03.2027)",
+      "checks": [
+        "models.hashed",
+        "manual"
+      ],
+      "evidence": [
+        "aibom.json",
+        "документ: карточка модели (model card)"
+      ],
+      "xref": {
+        "eu_ai_act": "Art. 11",
+        "iso42001": "A.6.2.7"
+      }
+    },
+    {
+      "id": "FZ-03",
+      "phase": "operation",
+      "title_ru": "Организационные и технические меры безопасности при использовании модели",
+      "title_en": "Organisational and technical security measures",
+      "checks": [
+        "policy.filter_input",
+        "policy.filter_output",
+        "policy.quotas",
+        "ledger.present"
+      ],
+      "evidence": [
+        "policy.json",
+        "ledger"
+      ],
+      "xref": {
+        "ru_fstek_117": "AI-OP-03..05"
+      }
+    },
+    {
+      "id": "FZ-04",
+      "phase": "operation",
+      "title_ru": "Решения остаются за человеком: подтверждение значимых действий, журнал решений",
+      "title_en": "Human remains the decision maker: approvals and decision log",
+      "checks": [
+        "policy.tools_approval",
+        "ledger.tool_events"
+      ],
+      "evidence": [
+        "ledger approved_by",
+        "policy.json"
+      ],
+      "xref": {
+        "eu_ai_act": "Art. 14"
+      }
+    },
+    {
+      "id": "FZ-05",
+      "phase": "governance",
+      "title_ru": "Возможность предупреждения об использовании ИИ при создании аудио/визуального контента (с 01.03.2027)",
+      "title_en": "Ability to warn that audio/visual content was AI-generated (from 01.03.2027)",
+      "checks": [
+        "manual"
+      ],
+      "evidence": [
+        "документ: UI/метаданные маркировки"
+      ],
+      "xref": {
+        "eu_ai_act": "Art. 50"
+      }
+    },
+    {
+      "id": "FZ-06",
+      "phase": "operation",
+      "title_ru": "Персональные данные и коммерческая тайна, передаваемые моделям: минимизация и учёт",
+      "title_en": "Personal data and trade secrets sent to models: minimisation and accounting",
+      "checks": [
+        "policy.redact",
+        "ledger.present"
+      ],
+      "evidence": [
+        "ledger request.pii"
+      ],
+      "xref": {
+        "ru_152fz": "PD-01, PD-02"
+      }
+    }
+  ]
+}

@@ -2,7 +2,7 @@
 
 [English](README.md) | **Русский**
 
-`aiproof` – библиотека с открытым исходным кодом **безопасности и соответствия для LLM-приложений и ИИ-агентов**: неизменяемый **журнал всех запросов к модели** (цепочка хешей + HMAC), **детектор prompt injection** на русском и английском, **маскирование персональных данных и секретов** (25 детекторов: ФИО, адрес, ИНН, СНИЛС, ОГРН, паспорт, полис ОМС, водительское удостоверение, телефон, расчётный счёт, карта, e-mail, API-ключи) с проверкой контрольных сумм, **квоты**, **AI-BOM** (CycloneDX ML-BOM) и **подписанный пакет доказательств** с картой контролей по **приказу ФСТЭК России № 117** (раздел ИИ), **152-ФЗ**, **OWASP Top 10 for LLM 2025**, **ISO/IEC 42001**, **NIST AI RMF** и **EU AI Act**.
+`aiproof` – библиотека с открытым исходным кодом **безопасности и соответствия для LLM-приложений и ИИ-агентов**: неизменяемый **журнал всех запросов к модели** (цепочка хешей + HMAC), **детектор prompt injection** на русском и английском, **маскирование персональных данных и секретов** (25 детекторов: ФИО, адрес, ИНН, СНИЛС, ОГРН, паспорт, полис ОМС, водительское удостоверение, телефон, расчётный счёт, карта, e-mail, API-ключи) с проверкой контрольных сумм, **квоты**, **AI-BOM** (CycloneDX ML-BOM) и **подписанный пакет доказательств** с картой контролей по **приказу ФСТЭК России № 117** (раздел ИИ), **152-ФЗ**, **243-ФЗ**, **OWASP Top 10 for LLM 2026**, **OWASP Agentic Top 10**, **ISO/IEC 42001**, **NIST AI RMF** и **EU AI Act**; allowlist инструментов и подтверждения для агентов на **LangChain** и **MCP**.
 
 Работает с **GigaChat**, **YandexGPT**, **OpenAI**, **Anthropic**, **Ollama**, **vLLM**, **DeepSeek**, **OpenRouter** и любым OpenAI-совместимым API. Python 3.9+, ноль зависимостей, данные не покидают ваш контур.
 
@@ -124,6 +124,8 @@ redacted: fio=1, passport_rf=1, inn=1, card=1, phone_ru=1
 - [attest, check, verify: доказательства соответствия](#attest-check-verify-доказательства-соответствия)
 - [Наборы контролей](#наборы-контролей)
 - [CI/CD: GitHub Action, GitLab CI, skill для Claude Code](#cicd-github-action-gitlab-ci-skill-для-claude-code)
+- [Агенты: allowlist инструментов, подтверждения, MCP, LangChain](#агенты-allowlist-инструментов-подтверждения-mcp-langchain)
+- [Экспорт в SIEM и наблюдаемость](#экспорт-в-siem-и-наблюдаемость)
 - [Нагрузка и production](#нагрузка-и-production)
 - [Сравнение с другими инструментами](#сравнение-с-другими-инструментами)
 - [FAQ](#faq)
@@ -214,7 +216,9 @@ with aiproof.record("llm.generate", model="qwen2.5-7b", input=prompt) as r:   # 
 | **Аттестация** | Файлы моделей (SHA-256, формат по сигнатуре, pickle), датасеты, фиксация версий зависимостей, места вызова LLM без обёртки, файлы инструкций агентов (`AGENTS.md`, `CLAUDE.md`, `.cursorrules`, конфиги MCP) со скрытыми или внедрёнными инструкциями. |
 | **AI-BOM** | CycloneDX 1.6: компоненты `machine-learning-model`, `data`, `library`, `service`. |
 | **Пакет доказательств** | Подписанный zip: `attest.json`, `controls.json`, `aibom.json`, `policy.json`, журналы, `manifest.json`. Проверяется офлайн. |
-| **Наборы контролей** | `ru-fstek-117`, `ru-152fz`, `owasp-llm-2025`, `eu-ai-act`, `iso-42001`, `nist-ai-rmf`. Свои – в JSON. |
+| **Наборы контролей** | `ru-fstek-117`, `ru-152fz`, `ru-243fz`, `owasp-llm-2026`, `owasp-agentic-2026`, `eu-ai-act`, `iso-42001`, `nist-ai-rmf`. Свои – в JSON. |
+| **Агенты** | Allowlist инструментов и подтверждения в политике, `@aiproof.tool`, callback LangChain, хук MCP (FastMCP), AgBOM MCP-серверов и инструментов. |
+| **Экспорт** | CEF (KUMA, MaxPatrol SIEM), OCSF API Activity, OpenTelemetry GenAI, SARIF. |
 | **Никогда не ломает приложение** | Внутренние ошибки записываются и глотаются, если не задан `fail_closed`. Вызов останавливают только квоты и явные `block` в политике. |
 
 ## Формат записи журнала
@@ -272,9 +276,12 @@ aiproof redact < file.txt  # попробовать маскирование
 
 | ID | Что | Контролей |
 |---|---|---|
-| `ru-fstek-117` | Методический документ ФСТЭК от 12.04.2026 к приказу № 117, п. 3.18 ИИ (ГИС, КИИ, ИСПДн, подрядчики) + РСБ/ЗПИ | 27 |
+| `ru-fstek-117` | ФСТЭК: приказ 117 в ред. приказа 137 (08.05.2026, п. 60–61), методический документ от 12.04.2026 п. 3.18, проект № 170500 на 2027 (агенты ИИ) | 29 |
 | `ru-152fz` | 152-ФЗ, техническая часть при передаче ПДн в LLM | 5 |
-| `owasp-llm-2025` | OWASP Top 10 for LLM Applications 2025 | 10 |
+| `ru-243fz` | Федеральный закон об ИИ 243-ФЗ от 26.07.2026 (с 01.09.2026 / 01.03.2027) | 6 |
+| `owasp-llm-2026` | OWASP Top 10 for LLM Applications 2026 (03.08.2026) | 10 |
+| `owasp-agentic-2026` | OWASP Top 10 for Agentic Applications 2026 (ASI01–ASI10) | 10 |
+| `owasp-llm-2025` | OWASP Top 10 for LLM Applications 2025 (для старых отчётов) | 10 |
 | `eu-ai-act` | EU AI Act, ст. 9–15 для высокорисковых систем | 7 |
 | `iso-42001` | ISO/IEC 42001:2023, Annex A | 7 |
 | `nist-ai-rmf` | NIST AI RMF 1.0 + профиль GenAI (NIST AI 600-1) | 5 |
@@ -297,6 +304,37 @@ GitHub:
 GitLab: см. [.gitlab-ci.yml](.gitlab-ci.yml) этого репозитория (lint, тесты, `aiproof attest` с артефактом `evidence.zip`).
 
 Claude Code / Codex / Cursor: скопируйте [`skills/aiproof/`](skills/aiproof/SKILL.md) в каталог skills и попросите «проверь проект на готовность к ФСТЭК 117 по ИИ».
+
+## Агенты: allowlist инструментов, подтверждения, MCP, LangChain
+
+Excessive Agency поднялась на #3 в OWASP LLM Top 10 2026, а проект изменений ФСТЭК на 2027 год прямо называет «агентов ИИ, в том числе автономных». `aiproof` проверяет и записывает каждый инструмент, который запускает агент:
+
+```json
+{ "preset": "ru-fstek-117", "app": "sales-agent",
+  "allowed_tools": ["crm.*", "search", "crm-tools/*"],
+  "tools_require_approval": ["crm.update", "mail.send"] }
+```
+
+```python
+@aiproof.tool("crm.update", agent="sales-agent")          # проверка до, запись после (sync или async)
+def update_crm(inn: str, status: str): ...
+
+aiproof.record_tool("mail.send", {"to": "a@b.ru"}, approved_by="user:42")   # запись / проверка вручную
+
+chain.invoke(x, config={"callbacks": [aiproof.langchain_handler(agent="support")]})   # LangChain / LangGraph
+mcp = aiproof.wrap_mcp(FastMCP("crm-tools"))                                           # MCP-сервер (FastMCP)
+```
+
+Инструмент вне allowlist или без требуемого `approved_by` вызывает `Blocked` и пишется в журнал как `tool.call` с `decision = not_in_allowlist | approval_required`; аргументы и результаты проходят то же маскирование, что и промпты. `aiproof attest` собирает **AgBOM**: MCP-серверы из `.mcp.json` / `claude_desktop_config.json` и все инструменты из журнала становятся компонентами CycloneDX (удалённые MCP-серверы помечаются). Проверки `policy.tools_allowlist`, `policy.tools_approval`, `ledger.tool_events`, `mcp.inventoried`, `mcp.no_remote` питают контроли ФСТЭК AI-OP-09 / AI-AGT-01/02, OWASP LLM03 и ASI01–ASI10.
+
+## Экспорт в SIEM и наблюдаемость
+
+```
+aiproof export --format cef  -o aiproof.cef     # ArcSight CEF: KUMA, MaxPatrol SIEM, Splunk, QRadar
+aiproof export --format ocsf -o events.jsonl    # OCSF 1.3 API Activity (6003), как рекомендует Agent Control Standard
+aiproof export --format otel -o spans.jsonl     # OpenTelemetry GenAI semantic conventions (атрибуты gen_ai.*)
+aiproof check . --sarif aiproof.sarif           # находки и упавшие контроли для GitHub code scanning / GitLab SAST
+```
 
 ## Нагрузка и production
 
@@ -352,9 +390,8 @@ Claude Code / Codex / Cursor: скопируйте [`skills/aiproof/`](skills/ai
 
 ## Дорожная карта
 
-- v0.2: callbacks LangChain / LlamaIndex, хуки MCP сервер/клиент, Go SDK.
-- v0.3: ISO 42001 и NIST AI RMF как полноценные карты; SARIF-вывод для `check`.
-- v0.4: сервер сбора доказательств (открытый API), экспорт в SIEM / ГосСОПКА.
+- v0.3: callbacks LlamaIndex, хук MCP на стороне клиента, Go SDK, опция ГОСТ Р 34.11 (Стрибог) для хешей журнала.
+- v0.4: сервер сбора доказательств (открытый API), экспорт в ГосСОПКА, наборы контролей под изменения ФСТЭК 2027 после принятия и под подзаконные акты к 243-ФЗ.
 
 ## Участие и безопасность
 
